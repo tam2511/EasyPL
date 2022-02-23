@@ -7,7 +7,7 @@ import torch
 from torchmetrics import Metric
 
 from easypl.lr_schedulers import WrapperScheduler
-from easypl.metrics import MetricsList
+from easypl.metrics.base import MetricsList
 from easypl.optimizers import WrapperOptimizer
 
 
@@ -20,6 +20,7 @@ class BaseLearner(LightningModule):
             lr_scheduler: Optional[Union[WrapperScheduler, List[WrapperScheduler]]] = None,
             train_metrics: Optional[List[Metric]] = None,
             val_metrics: Optional[List[Metric]] = None,
+            test_metrics: Optional[List[Metric]] = None,
             data_keys: Optional[List[str]] = None,
             target_keys: Optional[List[str]] = None
     ):
@@ -36,20 +37,29 @@ class BaseLearner(LightningModule):
         self.loss_f = loss
         self.optimizer = optimizer
         self.lr_scheduler = lr_scheduler
-        self.train_metrics = MetricsList()
-        if not train_metrics is None:
+        self.metrics = {
+            'train': [MetricsList()],
+            'val': [MetricsList()],
+            'test': [MetricsList()]
+        }
+        if train_metrics is not None:
             for train_metric in train_metrics:
-                self.train_metrics.add(metric=train_metric)
-        self.val_metrics = MetricsList([])
-        if not val_metrics is None:
+                self.metrics['train'].add(metric=train_metric)
+        if val_metrics is not None:
             for val_metric in val_metrics:
-                self.val_metrics.add(metric=val_metric)
-        if self.data_keys is None or self.target_keys is None:
-            raise ValueError('"data_keys" and "target_keys" can not be None')
+                self.metrics['val'][0].add(metric=val_metric)
+        if test_metrics is not None:
+            for test_metric in test_metrics:
+                self.metrics['test'][0].add(metric=test_metric)
         self.data_keys = data_keys
         self.target_keys = target_keys
-        self.return_train_output = True
-        self.return_val_output = True
+        if self.data_keys is None or self.target_keys is None:
+            raise ValueError('"data_keys" and "target_keys" can not be None')
+        self.return_output_phase = {
+            'train': False,
+            'val': False,
+            'test': False,
+        }
 
     def common_step(self, batch, batch_idx) -> dict:
         """
@@ -62,6 +72,29 @@ class BaseLearner(LightningModule):
         }
         """
         raise NotImplementedError
+
+    def __step(self, batch, batch_idx, dataloader_idx=0, phase='train'):
+        log_prefix = f'{phase}_{dataloader_idx}' if dataloader_idx > 0 else phase
+        result = self.common_step(batch, batch_idx)
+        self.__log(f'{log_prefix}/loss', result['loss'], on_step=True, on_epoch=False)
+        if phase == 'train':
+            self.__log_lr()
+        if len(self.metrics[phase]) < dataloader_idx + 1:
+            self.metrics[phase].append(self.metrics[phase][-1].clone())
+        self.metrics[phase][dataloader_idx].update(result['output_for_metric'], result['target_for_metric'])
+        ret = {'loss': result['loss'] if isinstance(torch.Tensor) else result['loss']['main']}
+        if self.return_output_phase[phase]:
+            ret['output'] = result['output_for_log']
+            ret['target'] = result['target_for_log']
+        return ret
+
+    def __epoch_end(self, phase='train'):
+        for dataloader_idx in range(len(self.metrics[phase])):
+            prefix = f'{phase}_{dataloader_idx}' if dataloader_idx > 0 else phase
+            metrics = self.metrics[phase][dataloader_idx].compute()
+            self.metrics[phase][dataloader_idx].reset()
+            for metric_name in metrics:
+                self.log(f'{prefix}/{metric_name}', metrics[metric_name], on_step=False, on_epoch=True, prog_bar=True)
 
     def __log(self, name: str, obj, on_step: bool = True, on_epoch: bool = False):
         if isinstance(obj, dict):
@@ -97,37 +130,22 @@ class BaseLearner(LightningModule):
             self.__log_lr_optimizer(optimizer=optimizers)
 
     def training_step(self, batch, batch_idx):
-        result = self.common_step(batch, batch_idx)
-        self.__log('train/loss', result['loss'], on_step=True, on_epoch=False)
-        self.__log_lr()
-        self.train_metrics.update(result['output_for_metric'], result['target_for_metric'])
-        ret = {'loss': result['loss'] if isinstance(torch.Tensor) else result['loss']['main']}
-        if self.return_train_output:
-            ret['output'] = result['output_for_log']
-            ret['target'] = result['target_for_log']
-        return ret
+        return self.__step(batch=batch, batch_idx=batch_idx, phase='train')
 
     def training_epoch_end(self, train_step_outputs):
-        train_metrics = self.train_metrics.compute()
-        self.train_metrics.reset()
-        for metric_name in train_metrics:
-            self.log(f'train/{metric_name}', train_metrics[metric_name], on_step=False, on_epoch=True, prog_bar=True)
+        self.__epoch_end(phase='train')
 
-    def validation_step(self, batch, batch_idx):
-        result = self.common_step(batch, batch_idx)
-        self.__log('val/loss', result['loss'], on_step=True, on_epoch=False)
-        self.val_metrics.update(result['output_for_metric'], result['target_for_metric'])
-        ret = {'loss': result['loss'] if isinstance(torch.Tensor) else result['loss']['main']}
-        if self.return_val_output:
-            ret['output'] = result['output_for_log']
-            ret['target'] = result['target_for_log']
-        return ret
+    def validation_step(self, batch, batch_idx, dataloader_idx=0):
+        return self.__step(batch=batch, batch_idx=batch_idx, dataloader_idx=dataloader_idx, phase='val')
 
     def validation_epoch_end(self, val_step_outputs):
-        val_metrics = self.val_metrics.compute()
-        self.val_metrics.reset()
-        for metric_name in val_metrics:
-            self.log(f'val/{metric_name}', val_metrics[metric_name], on_step=False, on_epoch=True, prog_bar=True)
+        self.__epoch_end(phase='val')
+
+    def test_step(self, batch, batch_idx, dataloader_idx=0):
+        return self.__step(batch=batch, batch_idx=batch_idx, dataloader_idx=dataloader_idx, phase='test')
+
+    def test_epoch_end(self, val_step_outputs):
+        self.__epoch_end(phase='test')
 
     def configure_optimizers(self):
         if isinstance(self.optimizer, list):

@@ -5,7 +5,8 @@ from albumentations.core.transforms_interface import BasicTransform
 
 
 class ToImage(BasicTransform):
-    """Convert torch.Tensor to image in numpy format.
+    """
+    Convert torch.Tensor to image in numpy format.
     """
 
     def __init__(self, transpose_mask=False, always_apply=True, p=1.0):
