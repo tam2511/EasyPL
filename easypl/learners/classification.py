@@ -37,6 +37,9 @@ class ClassificatorLearner(BaseLearner):
 
     __init__.__doc__ = BaseLearner.__init__.__doc__
 
+    def forward(self, inputs):
+        return self.model(inputs)
+
     def common_step(self, batch, batch_idx):
         images = batch[self.data_keys[0]]
         targets = batch[self.target_keys[0]]
