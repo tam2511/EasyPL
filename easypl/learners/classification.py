@@ -20,8 +20,6 @@ class ClassificatorLearner(BaseLearner):
             data_keys: Optional[List[str]] = None,
             target_keys: Optional[List[str]] = None,
     ):
-        if len(data_keys) != 1 and len(target_keys) != 1:
-            raise ValueError('"data_keys" and "target_keys" must be one element')
         super().__init__(
             model=model,
             loss=loss,
@@ -33,6 +31,8 @@ class ClassificatorLearner(BaseLearner):
             data_keys=data_keys,
             target_keys=target_keys
         )
+        if len(data_keys) != 1 and len(target_keys) != 1:
+            raise ValueError('"data_keys" and "target_keys" must be one element')
         self.multilabel = False
 
     __init__.__doc__ = BaseLearner.__init__.__doc__
