@@ -45,7 +45,7 @@ class ClassificatorLearner(BaseLearner):
         targets = batch[self.target_keys[0]]
         self.multilabel = targets.ndim > 1
         output = self.forward(images)
-        loss = self.loss_f(output, targets)
+        loss = self.loss_f(output, targets.float() if self.multilabel else targets)
         return {
             'loss': loss,
             'output_for_metric': output.sigmoid() if self.multilabel else output.argmax(dim=1),
