@@ -44,7 +44,7 @@ class BaseLearner(LightningModule):
         }
         if train_metrics is not None:
             for train_metric in train_metrics:
-                self.metrics['train'].add(metric=train_metric)
+                self.metrics['train'][0].add(metric=train_metric)
         if val_metrics is not None:
             for val_metric in val_metrics:
                 self.metrics['val'][0].add(metric=val_metric)
