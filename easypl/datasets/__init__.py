@@ -1,1 +1,1 @@
-from easypl.datasets.base import DebugDataset
+from easypl.datasets.classification import *
