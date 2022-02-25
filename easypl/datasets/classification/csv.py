@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Optional, Union, List
 import pandas as pd
 
 from easypl.datasets.base import PathBaseDataset
@@ -15,7 +15,9 @@ class CSVDatasetClassification(PathBaseDataset):
             image_prefix: str = '',
             path_transform: Callable = None,
             transform=None,
-            return_label: bool = True
+            return_label: bool = True,
+            image_column: Optional[str] = None,
+            target_columns: Optional[Union[str, List[str]]] = None,
     ):
         '''
         :param csv_path: path to csv file with paths of images (one column)
@@ -24,22 +26,25 @@ class CSVDatasetClassification(PathBaseDataset):
          path_transform(image_path))
         :param transform: albumentations transform class or None
         :param return_label: if True return (image, label), else return only image
+        :param image_column: column name or None. If None then will be getting the first column
+        :param target_columns: column name/names or None. If None then will be getting all but the first column
         '''
         super().__init__(image_prefix=image_prefix, path_transform=path_transform, transform=transform)
         self.return_label = return_label
-        self.dt = pd.read_csv(csv_path)
+        dt = pd.read_csv(csv_path)
+        self.images = dt.values[:, 0] if image_column is None else dt[image_column].values
+        self.targets = dt.values[:, 1:] if target_columns is None else dt[target_columns].values
 
     def __len__(self):
-        return len(self.dt)
+        return len(self.images)
 
     def __getitem__(self, idx) -> dict:
-        row = self.dt.iloc[idx].values
-        image = self._read_image(row[0])
+        image = self._read_image(self.images[idx])
         if not self.return_label:
             return {
                 'image': image
             }
-        label = row[1:].astype('int64')
+        label = self.targets[idx].astype('int64')
         return {
             'image': image,
             'target': label
