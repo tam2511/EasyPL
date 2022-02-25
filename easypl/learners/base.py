@@ -82,7 +82,7 @@ class BaseLearner(LightningModule):
         if len(self.metrics[phase]) < dataloader_idx + 1:
             self.metrics[phase].append(self.metrics[phase][-1].clone())
         self.metrics[phase][dataloader_idx].update(result['output_for_metric'], result['target_for_metric'])
-        ret = {'loss': result['loss'] if isinstance(torch.Tensor) else result['loss']['main']}
+        ret = {'loss': result['loss'] if isinstance(result['loss'], torch.Tensor) else result['loss']['main']}
         if self.return_output_phase[phase]:
             ret['output'] = result['output_for_log']
             ret['target'] = result['target_for_log']
