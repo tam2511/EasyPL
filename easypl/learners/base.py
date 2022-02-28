@@ -76,7 +76,7 @@ class BaseLearner(LightningModule):
     def __step(self, batch, batch_idx, dataloader_idx=0, phase='train'):
         log_prefix = f'{phase}_{dataloader_idx}' if dataloader_idx > 0 else phase
         result = self.common_step(batch, batch_idx)
-        self.__log(f'{log_prefix}/loss', result['loss'], on_step=True, on_epoch=False)
+        self.__log(f'{log_prefix}/loss', result['loss'], on_step=True, on_epoch=False, prog_bar=True)
         if phase == 'train':
             self.__log_lr()
         if len(self.metrics[phase]) < dataloader_idx + 1:
@@ -96,12 +96,12 @@ class BaseLearner(LightningModule):
             for metric_name in metrics:
                 self.log(f'{prefix}/{metric_name}', metrics[metric_name], on_step=False, on_epoch=True, prog_bar=True)
 
-    def __log(self, name: str, obj, on_step: bool = True, on_epoch: bool = False):
+    def __log(self, name: str, obj, on_step: bool = True, on_epoch: bool = False, prog_bar: bool = False):
         if isinstance(obj, dict):
             for key in obj:
-                self.__log('_'.join([name, key]), obj[key], on_step=on_step, on_epoch=on_epoch)
+                self.__log('_'.join([name, key]), obj[key], on_step=on_step, on_epoch=on_epoch, prog_bar=prog_bar)
         elif isinstance(obj, torch.Tensor) or isinstance(obj, Number):
-            self.log(name, obj, on_step=on_step, on_epoch=on_epoch)
+            self.log(name, obj, on_step=on_step, on_epoch=on_epoch, prog_bar=prog_bar)
         else:
             warnings.warn(f'Value with name {name} has unsupported type {type(obj)}. This value can\'t logged.',
                           Warning, stacklevel=2)
