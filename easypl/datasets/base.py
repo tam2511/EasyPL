@@ -30,7 +30,7 @@ class PathBaseDataset(Dataset):
     def __len__(self):
         raise NotImplementedError
 
-    def _read_image(self, image_id, image_prefix=None):
+    def _read_image(self, image_id, image_prefix=None, **image_read_kwargs):
         image_path = image_id
         if self.path_transform is not None:
             image_path = dill.loads(self.path_transform)(image_path)
@@ -38,7 +38,7 @@ class PathBaseDataset(Dataset):
             image_path = os.path.join(image_prefix, image_path)
         elif self.image_prefix != '':
             image_path = os.path.join(self.image_prefix, image_path)
-        image = read_image(image_path)
+        image = read_image(image_path, **image_read_kwargs)
         if self.transform:
             image = self.transform(image=image)['image']
         return image

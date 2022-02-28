@@ -1,4 +1,6 @@
 from typing import Callable, Optional, Union, List
+
+import cv2
 import pandas as pd
 
 from easypl.datasets.base import PathBaseDataset
@@ -47,7 +49,9 @@ class CSVDatasetSegmentation(PathBaseDataset):
             return {
                 'image': image
             }
-        mask = self._read_image(self.masks[idx], image_prefix=self.mask_prefix).astype('int64')
+        mask = self._read_image(
+            self.masks[idx], image_prefix=self.mask_prefix, read_flag=cv2.IMREAD_GRAYSCALE, to_rgb=False
+        ).astype('int64')
         return {
             'image': image,
             'mask': mask
