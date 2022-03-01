@@ -46,12 +46,10 @@ class SegmentationLearner(BaseLearner):
         self.multilabel = (targets.ndim == images.ndim)
         output = self.forward(images)
         loss = self.loss_f(output, targets.float() if self.multilabel else targets)
-        print(output.shape)
-        print(targets.shape)
         return {
             'loss': loss,
-            'output_for_metric': output.sigmoid() if self.multilabel else output.argmax(dim=0),
+            'output_for_metric': output.sigmoid() if self.multilabel else output.argmax(dim=1),
             'target_for_metric': targets,
-            'output_for_log': output.sigmoid() if self.multilabel else output.softmax(dim=0),
+            'output_for_log': output.sigmoid() if self.multilabel else output.softmax(dim=1),
             'target_for_log': targets
         }
