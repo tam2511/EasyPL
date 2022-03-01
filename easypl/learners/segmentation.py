@@ -43,9 +43,11 @@ class SegmentationLearner(BaseLearner):
     def common_step(self, batch, batch_idx):
         images = batch[self.data_keys[0]]
         targets = batch[self.target_keys[0]]
-        self.multilabel = targets.ndim == images.ndim
+        self.multilabel = (targets.ndim == images.ndim)
         output = self.forward(images)
         loss = self.loss_f(output, targets.float() if self.multilabel else targets)
+        print(output.shape)
+        print(targets.shape)
         return {
             'loss': loss,
             'output_for_metric': output.sigmoid() if self.multilabel else output.argmax(dim=0),
