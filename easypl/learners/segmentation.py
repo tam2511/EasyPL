@@ -48,8 +48,8 @@ class SegmentationLearner(BaseLearner):
         loss = self.loss_f(output, targets.float() if self.multilabel else targets)
         return {
             'loss': loss,
-            'output_for_metric': output.sigmoid() if self.multilabel else output.argmax(dim=1),
+            'output_for_metric': output.sigmoid() if self.multilabel else output.argmax(dim=0),
             'target_for_metric': targets,
-            'output_for_log': output.sigmoid() if self.multilabel else output.softmax(dim=1),
+            'output_for_log': output.sigmoid() if self.multilabel else output.softmax(dim=0),
             'target_for_log': targets
         }

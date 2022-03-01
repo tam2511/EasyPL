@@ -1,5 +1,6 @@
 from torchmetrics import Metric
 import torch
+from torch.nn.functional import one_hot
 
 
 class PixelLevelBase(Metric):
@@ -12,6 +13,7 @@ class PixelLevelBase(Metric):
         super().__init__()
         self.threshold = threshold
         self.average = average
+        self.num_classes = num_classes
         if num_classes is None or num_classes < 1:
             raise ValueError('You must passing number of classes')
         if average not in ['macro', 'none']:
@@ -27,8 +29,14 @@ class PixelLevelBase(Metric):
         return tp, tn, fp, fn
 
     def update(self, pred_masks: torch.Tensor, target_masks: torch.Tensor):
-        batch_size, num_classes = pred_masks.size(0), pred_masks.size(1)
-        preds, targets = pred_masks.view(batch_size, num_classes, -1), target_masks.view(batch_size, num_classes, -1)
+        if pred_masks.size(0) != self.num_classes and pred_masks.ndim < 3:
+            pred_masks = one_hot(pred_masks,
+                                 num_classes=self.num_classes).permute(-1, *range(pred_masks.ndim - 1))
+            target_masks = one_hot(target_masks,
+                                   num_classes=self.num_classes).permute(-1, *range(target_masks.ndim - 1))
+        batch_size = pred_masks.size(0)
+        preds = pred_masks.view(batch_size, self.num_classes, -1)
+        targets = target_masks.view(batch_size, self.num_classes, -1)
         preds = preds > self.threshold
         self.value += self.reduce(*self.__stats(preds, targets)).sum(0)
         self.num += batch_size
