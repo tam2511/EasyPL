@@ -29,16 +29,11 @@ class PixelLevelBase(Metric):
         return tp, tn, fp, fn
 
     def update(self, pred_masks: torch.Tensor, target_masks: torch.Tensor):
-        print(pred_masks.shape)
         if pred_masks.size(0) != self.num_classes and pred_masks.ndim < 3:
-            print(pred_masks.shape)
-            print(target_masks.shape)
             pred_masks = one_hot(pred_masks,
                                  num_classes=self.num_classes).permute(-1, *range(pred_masks.ndim - 1))
             target_masks = one_hot(target_masks,
                                    num_classes=self.num_classes).permute(-1, *range(target_masks.ndim - 1))
-            print(pred_masks.shape)
-            print(target_masks.shape)
         batch_size = pred_masks.size(0)
         preds = pred_masks.view(batch_size, self.num_classes, -1)
         targets = target_masks.view(batch_size, self.num_classes, -1)
