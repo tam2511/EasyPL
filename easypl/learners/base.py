@@ -73,10 +73,12 @@ class BaseLearner(LightningModule):
         """
         raise NotImplementedError
 
-    def __step(self, batch, batch_idx, dataloader_idx=0, phase='train'):
+    def __step(self, batch, batch_idx, dataloader_idx=0, phase='train', log_on_step=True, log_on_epoch=False,
+               log_prog_bar=True):
         log_prefix = f'{phase}_{dataloader_idx}' if dataloader_idx > 0 else phase
         result = self.common_step(batch, batch_idx)
-        self.__log(f'{log_prefix}/loss', result['loss'], on_step=True, on_epoch=False, prog_bar=True)
+        self.__log(f'{log_prefix}/loss', result['loss'], on_step=log_on_step, on_epoch=log_on_epoch,
+                   prog_bar=log_prog_bar)
         if phase == 'train':
             self.__log_lr()
         if len(self.metrics[phase]) < dataloader_idx + 1:
@@ -130,19 +132,22 @@ class BaseLearner(LightningModule):
             self.__log_lr_optimizer(optimizer=optimizers)
 
     def training_step(self, batch, batch_idx):
-        return self.__step(batch=batch, batch_idx=batch_idx, phase='train')
+        return self.__step(batch=batch, batch_idx=batch_idx, phase='train', log_on_step=True, log_on_epoch=False,
+                           log_prog_bar=True)
 
     def training_epoch_end(self, train_step_outputs):
         self.__epoch_end(phase='train')
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
-        return self.__step(batch=batch, batch_idx=batch_idx, dataloader_idx=dataloader_idx, phase='val')
+        return self.__step(batch=batch, batch_idx=batch_idx, dataloader_idx=dataloader_idx, phase='val',
+                           log_on_step=False, log_on_epoch=True, log_prog_bar=True)
 
     def validation_epoch_end(self, val_step_outputs):
         self.__epoch_end(phase='val')
 
     def test_step(self, batch, batch_idx, dataloader_idx=0):
-        return self.__step(batch=batch, batch_idx=batch_idx, dataloader_idx=dataloader_idx, phase='test')
+        return self.__step(batch=batch, batch_idx=batch_idx, dataloader_idx=dataloader_idx, phase='test',
+                           log_on_step=False, log_on_epoch=True, log_prog_bar=True)
 
     def test_epoch_end(self, val_step_outputs):
         self.__epoch_end(phase='test')
