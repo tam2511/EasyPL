@@ -6,7 +6,7 @@ from albumentations.core.transforms_interface import BasicTransform
 
 class ToImage(BasicTransform):
     """
-    Convert torch.Tensor to image in numpy format.
+    Convert tensor (numpy format) to image (numpy format).
     """
 
     def __init__(self, transpose_mask=False, always_apply=True, p=1.0):
@@ -21,12 +21,12 @@ class ToImage(BasicTransform):
         if len(img.shape) != 3:
             raise ValueError("Albumentations only supports tensors on CHW format")
 
-        return img.permute(1, 2, 0).numpy()
+        return img.transpose(1, 2, 0)
 
     def apply_to_mask(self, mask, **params):  # skipcq: PYL-W0613
         if self.transpose_mask and mask.ndim == 3:
-            mask = mask.permute(1, 2, 0)
-        return mask.numpy()
+            mask = mask.transpose(1, 2, 0)
+        return mask
 
     def apply_to_masks(self, masks, **params):
         return [self.apply_to_mask(mask, **params) for mask in masks]
