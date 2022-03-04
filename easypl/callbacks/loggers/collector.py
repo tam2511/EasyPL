@@ -33,46 +33,41 @@ class ImageCollector(object):
         self.cache = {}
         self.reset()
 
-    def update(self, output: torch.Tensor, target: torch.Tensor, data=None) -> list:
-        if self.mode in ['first', 'random']:
-            if self.idx in self.idxs:
+    def update(self, output: torch.Tensor, target: torch.Tensor, data=None):
+        if self.mode in ['random', 'first']:
+            available_idxs = torch.where(torch.logical_not(torch.isinf(self.cache['score'])))[0]
+            if self.idx in self.idxs and len(available_idxs) > 0:
+                idx = available_idxs[0]
                 self.idx += 1
-                return [
-                    {
-                        'output': output,
-                        'target': target,
-                        'data': data,
-                        'score': 0.0
-                    }
-                ]
+                self.cache['score'][idx] = 0
+                self.cache['data'][idx] = {
+                    'output': output,
+                    'target': target,
+                    'data': data,
+                    'score': 0
+                }
             else:
                 self.idx += 1
-                return []
-
-        score = self.score_func(output, target)
-        dist = (self.cache['score'] - score) * (1 - 2 * self.largest)
-        idx = torch.argmax(dist)
-        if dist[idx] > 0:
-            self.cache['score'][idx] = score
-            self.cache['data'][idx] = {
-                'output': output,
-                'target': target,
-                'data': data,
-                'score': score
-            }
-        self.idx += 1
-        return []
+        else:
+            score = self.score_func(output, target)
+            dist = (self.cache['score'] - score) * (1 - 2 * self.largest)
+            idx = torch.argmax(dist)
+            if dist[idx] > 0:
+                self.cache['score'][idx] = score
+                self.cache['data'][idx] = {
+                    'output': output,
+                    'target': target,
+                    'data': data,
+                }
+            self.idx += 1
 
     def compute(self) -> list:
-        if self.mode in ['first', 'random']:
-            return []
         idxs = torch.where(torch.logical_not(torch.isinf(self.cache['score'])))[0]
         return [
             {
                 'output': self.cache['data'][idx]['output'],
                 'target': self.cache['data'][idx]['target'],
                 'data': self.cache['data'][idx]['data'],
-                'score': self.cache['score'][idx]
             }
             for idx in idxs
         ]
@@ -91,5 +86,5 @@ class ImageCollector(object):
         elif self.mode == 'top':
             if self.score_func is None:
                 raise ValueError('In "top" mode you should define "score_func" argument.')
-            self.cache['score'] = torch.ones(max_images) * (-float('inf') if self.largest else float('inf'))
-            self.cache['data'] = [{} for _ in range(max_images)]
+        self.cache['score'] = torch.ones(max_images) * (-float('inf') if self.largest else float('inf'))
+        self.cache['data'] = [{} for _ in range(max_images)]
