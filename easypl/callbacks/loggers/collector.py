@@ -35,7 +35,7 @@ class ImageCollector(object):
 
     def update(self, output: torch.Tensor, target: torch.Tensor, data=None):
         if self.mode in ['random', 'first']:
-            available_idxs = torch.where(torch.logical_not(torch.isinf(self.cache['score'])))[0]
+            available_idxs = torch.where(torch.isinf(self.cache['score']))[0]
             if self.idx in self.idxs and len(available_idxs) > 0:
                 idx = available_idxs[0]
                 self.idx += 1
