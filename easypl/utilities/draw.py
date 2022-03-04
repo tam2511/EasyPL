@@ -11,11 +11,11 @@ def draw_classifications(image, predictions, targets, class_names, num_pred=1, n
 
 def fig2np(fig: plt.Figure):
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=fig.dpi)
+    fig.savefig(buf, format="jpg", dpi=fig.dpi)
     buf.seek(0)
     img_arr = np.frombuffer(buf.getvalue(), dtype=np.uint8)
     buf.close()
-    img = cv2.imdecode(img_arr, 1)
+    img = cv2.imdecode(img_arr, cv2.IMREAD_COLOR)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     return img
