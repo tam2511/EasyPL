@@ -145,7 +145,8 @@ class BaseSampleLogger(Callback):
             batch_idx,
             dataloader_idx,
     ):
-        self.__on_batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
+        if self.phase == 'train':
+            self.__on_batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
 
     def on_validation_batch_end(
             self,
@@ -156,7 +157,8 @@ class BaseSampleLogger(Callback):
             batch_idx,
             dataloader_idx,
     ):
-        self.__on_batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
+        if self.phase == 'val':
+            self.__on_batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
 
     def on_predict_batch_end(
             self,
@@ -167,7 +169,8 @@ class BaseSampleLogger(Callback):
             batch_idx,
             dataloader_idx,
     ):
-        self.__on_batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
+        if self.phase == 'predict':
+            self.__on_batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
 
     def on_test_batch_end(
             self,
@@ -178,7 +181,8 @@ class BaseSampleLogger(Callback):
             batch_idx,
             dataloader_idx,
     ):
-        self.__on_batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
+        if self.phase == 'test':
+            self.__on_batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
 
     def __on_epoch_end(
             self,
@@ -197,7 +201,8 @@ class BaseSampleLogger(Callback):
             pl_module,
             unused=None
     ):
-        self.__on_epoch_end(trainer, pl_module, unused=unused)
+        if self.phase == 'train':
+            self.__on_epoch_end(trainer, pl_module, unused=unused)
 
     def on_validation_epoch_end(
             self,
@@ -205,7 +210,8 @@ class BaseSampleLogger(Callback):
             pl_module,
             unused=None
     ):
-        self.__on_epoch_end(trainer, pl_module, unused=unused)
+        if self.phase == 'val':
+            self.__on_epoch_end(trainer, pl_module, unused=unused)
 
     def on_test_epoch_end(
             self,
@@ -213,7 +219,8 @@ class BaseSampleLogger(Callback):
             pl_module,
             unused=None
     ):
-        self.__on_epoch_end(trainer, pl_module, unused=unused)
+        if self.phase == 'test':
+            self.__on_epoch_end(trainer, pl_module, unused=unused)
 
     def on_predict_epoch_end(
             self,
@@ -221,4 +228,5 @@ class BaseSampleLogger(Callback):
             pl_module,
             unused=None
     ):
-        self.__on_epoch_end(trainer, pl_module, unused=unused)
+        if self.phase == 'predict':
+            self.__on_epoch_end(trainer, pl_module, unused=unused)
