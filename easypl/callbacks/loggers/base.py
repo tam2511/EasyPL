@@ -54,7 +54,7 @@ class BaseSampleLogger(Callback):
             bias = len(dataloader) % len(dataloader) if dataloader.drop_last and len(dataloader) > 0 else 0
             return ImageCollector(
                 mode=self.mode,
-                max_images=self.max_images,
+                max_images=self.max_samples,
                 score_func=self.score_func,
                 largest=self.largest,
                 dataset_size=len(dataloader.dataset) - bias)
