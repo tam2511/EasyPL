@@ -1,6 +1,12 @@
+import warnings
 from typing import Dict
-
+import numpy as np
 import torch
+import colorsys
+import random
+from uuid import uuid4
+import cv2
+import os
 
 from easypl.callbacks.loggers.base_image import BaseImageLogger
 
@@ -36,6 +42,9 @@ class SegmentationImageLogger(BaseImageLogger):
                 raise ValueError('If "class_names" is None then you should define num_classes')
             else:
                 self.class_names = [f'class_{i}' for i in range(self.num_classes)]
+        if self.num_classes is None:
+            self.num_classes = len(self.class_names)
+        self.colors = self.__generate_colors()
 
     def get_log(self, sample, output, target) -> Dict:
         image = self.inv_transform(image=sample)['image'].astype('uint8')
@@ -59,7 +68,7 @@ class SegmentationImageLogger(BaseImageLogger):
             'target_mask': target_mask
         }
 
-    def _log_wandb(self, samples: list):
+    def _log_wandb(self, samples: list, dataloader_idx: int):
         images = [_['image'] for _ in samples]
         masks = [
             {
@@ -76,8 +85,36 @@ class SegmentationImageLogger(BaseImageLogger):
         ]
         self.logger.log_image(key=self.tag, images=images, masks=masks)
 
-    def _log_tensorboard(self, samples: list):
-        raise NotImplementedError
+    def _log_tensorboard(self, samples: list, dataloader_idx: int):
+        warnings.warn(f'TensorboardLogger does not supported. Images will save on disk', Warning, stacklevel=2)
+        self.save_on_disk = True
 
-    def _log_on_disk(self, samples: list):
-        raise NotImplementedError
+    def __generate_colors(self):
+        hsv = [(i / self.num_classes, 1, 1) for i in range(self.num_classes)]
+        colors = list(map(lambda c: colorsys.hsv_to_rgb(*c), hsv))
+        random.shuffle(colors)
+        return colors
+
+    def _log_on_disk(self, samples: list, dataloader_idx: int):
+        for i in range(len(samples)):
+            pred_mask, target_mask = np.copy(samples[i]['image']), np.copy(samples[i]['image'])
+            for class_idx in range(self.num_classes):
+                pred_mask = np.where(
+                    samples[i]['pred_mask'] == class_idx,
+                    self.colors[class_idx],
+                    pred_mask
+                )
+                target_mask = np.where(
+                    samples[i]['target_mask'] == class_idx,
+                    self.colors[class_idx],
+                    target_mask
+                )
+            pred_mask = (pred_mask + samples[i]['image']) // 2
+            target_mask = (target_mask + samples[i]['image']) // 2
+
+            dest_dir = os.path.join(self.dir_path, f'epoch_{self.epoch}', self.phase)
+            dest_dir = os.path.join(dest_dir, f'dataloader_{dataloader_idx}')
+            os.makedirs(dest_dir, exist_ok=True)
+            guid = str(uuid4())
+            cv2.imwrite(os.path.join(dest_dir, f'{guid}_pred.jpg'), pred_mask)
+            cv2.imwrite(os.path.join(dest_dir, f'{guid}_gt.jpg'), target_mask)

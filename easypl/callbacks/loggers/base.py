@@ -1,10 +1,10 @@
+import os
 import warnings
 from typing import List, Dict
 
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.supporters import CombinedLoader
 from pytorch_lightning.loggers import *
-
 
 from easypl.callbacks.loggers.collector import ImageCollector
 
@@ -76,32 +76,40 @@ class BaseSampleLogger(Callback):
             for dataloader_idx in range(len(trainer.predict_dataloaders)):
                 self.collector.append(get_collector(trainer.predict_dataloaders[dataloader_idx]))
 
+    def __init_dir_path(self):
+        if self.dir_path is None:
+            root = os.path.join(os.getcwd(), 'lightning_logs')
+            version_logs = [dir_name for dir_name in os.listdir(root) if os.path.isdir(os.path.join(root, dir_name))]
+            last_version = max(map(lambda x: int(x.split('_')[-1]), version_logs))
+            self.dir_path = os.path.join(root, 'version_{}'.format(last_version), 'images')
+        os.makedirs(self.dir_path, exist_ok=True)
+
     def get_log(self, sample, output, target) -> Dict:
         raise NotImplementedError
 
-    def _log_wandb(self, samples: list):
+    def _log_wandb(self, samples: list, dataloader_idx: int):
         raise NotImplementedError
 
-    def _log_tensorboard(self, samples: list):
+    def _log_tensorboard(self, samples: list, dataloader_idx: int):
         raise NotImplementedError
 
-    def _log_on_disk(self, samples: list):
+    def _log_on_disk(self, samples: list, dataloader_idx: int):
         raise NotImplementedError
 
-    def __log(self, samples: List):
+    def __log(self, samples: List, dataloader_idx: int = 0):
         if len(samples) == 0:
             return
         if isinstance(self.logger, WandbLogger):
-            self._log_wandb(samples)
+            self._log_wandb(samples, dataloader_idx)
         elif isinstance(self.logger, TensorBoardLogger):
-            self._log_tensorboard(samples)
+            self._log_tensorboard(samples, dataloader_idx)
         else:
             warnings.warn(f'{self.logger.__class__.__name__} is not supported. Samples will log on disk.', Warning,
                           stacklevel=2)
             self.save_on_disk = True
 
         if self.save_on_disk:
-            self._log_on_disk(samples)
+            self._log_on_disk(samples, dataloader_idx)
 
     def on_train_start(self, trainer, pl_module):
         pl_module.return_output_phase[self.phase] = True
@@ -111,6 +119,7 @@ class BaseSampleLogger(Callback):
             self.logger = trainer.logger
         if self.collector is None:
             self.__init_collectors(trainer)
+        self.__init_dir_path()
         self.data_keys = pl_module.data_keys
 
     def _post_init(self, trainer, pl_module):
@@ -134,7 +143,10 @@ class BaseSampleLogger(Callback):
         target = outputs['target']
         for i in range(len(output)):
             sample = self.__sample(batch, i, dataloader_idx)
-            self.collector.update(output[i], target[i], sample)
+            if isinstance(self.collector, list):
+                self.collector[dataloader_idx].update(output[i], target[i], sample)
+            else:
+                self.collector.update(output[i], target[i], sample)
 
     def on_train_batch_end(
             self,
@@ -190,10 +202,17 @@ class BaseSampleLogger(Callback):
             pl_module,
             unused=None
     ):
-        results = self.collector.compute()
-        samples = [self.get_log(result['data'], result['output'], result['target']) for result in results]
-        self.__log(samples)
-        self.collector.reset()
+        if isinstance(self.collector, list):
+            for dataloader_idx in range(len(self.collector)):
+                results = self.collector[dataloader_idx].compute()
+                samples = [self.get_log(result['data'], result['output'], result['target']) for result in results]
+                self.__log(samples, dataloader_idx)
+                self.collector[dataloader_idx].reset()
+        else:
+            results = self.collector.compute()
+            samples = [self.get_log(result['data'], result['output'], result['target']) for result in results]
+            self.__log(samples)
+            self.collector.reset()
 
     def on_train_epoch_end(
             self,
