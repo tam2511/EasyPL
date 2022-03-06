@@ -34,7 +34,7 @@ class BaseSampleLogger(Callback):
         self.save_on_disk = save_on_disk
 
         self.is_init = False
-        self.tag = f'{self.phase}_predictions[mode={self.mode}]'
+        self.tag = f'{self.phase}/{self.mode}_predictions'
         self.collector = None
         self.data_keys = None
         self.logger = None
