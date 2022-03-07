@@ -13,17 +13,18 @@ from easypl.callbacks.loggers.base_image import BaseImageLogger
 
 class SegmentationImageLogger(BaseImageLogger):
     def __init__(
-            self,
-            phase='train',
-            max_samples=1,
-            class_names=None,
-            num_classes=None,
-            mode='first',
-            sample_key=None,
-            score_func=None,
-            largest=True,
-            dir_path=None,
-            save_on_disk=False
+        self,
+        phase='train',
+        max_samples=1,
+        class_names=None,
+        num_classes=None,
+        mode='first',
+        sample_key=None,
+        score_func=None,
+        largest=True,
+        dir_path=None,
+        save_on_disk=False,
+        background_class=0
     ):
         super().__init__(
             phase=phase,
@@ -45,6 +46,7 @@ class SegmentationImageLogger(BaseImageLogger):
         if self.num_classes is None:
             self.num_classes = len(self.class_names)
         self.colors = self.__generate_colors()
+        self.background_class = background_class
 
     def get_log(self, sample, output, target) -> Dict:
         image = self.inv_transform(image=sample)['image'].astype('uint8')
@@ -90,16 +92,15 @@ class SegmentationImageLogger(BaseImageLogger):
         self.save_on_disk = True
 
     def __generate_colors(self):
-        hsv = [(i / self.num_classes, 1, 1) for i in range(self.num_classes)]
-        colors = list(map(lambda c: colorsys.hsv_to_rgb(*c), hsv))
-        random.shuffle(colors)
-        return colors
+        return np.random.randint(0, 255, (self.num_classes, 3))
 
     def _log_on_disk(self, samples: list, dataloader_idx: int):
         for i in range(len(samples)):
             pred_mask, target_mask = np.copy(samples[i]['image']), np.copy(samples[i]['image'])
             color_mask = np.zeros_like(samples[i]['image'])
             for class_idx in range(self.num_classes):
+                if class_idx == self.background_class:
+                    continue
                 for color_i in range(3):
                     color_mask[:, :, color_i].fill(self.colors[class_idx][color_i])
                 pred_mask = np.where(
@@ -119,5 +120,5 @@ class SegmentationImageLogger(BaseImageLogger):
             dest_dir = os.path.join(dest_dir, f'dataloader_{dataloader_idx}')
             os.makedirs(dest_dir, exist_ok=True)
             guid = str(uuid4())
-            cv2.imwrite(os.path.join(dest_dir, f'{guid}_pred.jpg'), pred_mask)
-            cv2.imwrite(os.path.join(dest_dir, f'{guid}_gt.jpg'), target_mask)
+            cv2.imwrite(os.path.join(dest_dir, f'{guid}_pred.jpg'), cv2.cvtColor(pred_mask, cv2.COLOR_RGB2BGR))
+            cv2.imwrite(os.path.join(dest_dir, f'{guid}_gt.jpg'), cv2.cvtColor(target_mask, cv2.COLOR_RGB2BGR))
