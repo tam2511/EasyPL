@@ -119,7 +119,6 @@ class BaseSampleLogger(Callback):
             self.logger = trainer.logger
         if self.collector is None:
             self.__init_collectors(trainer)
-        self.__init_dir_path()
         self.data_keys = pl_module.data_keys
 
     def _post_init(self, trainer, pl_module):
@@ -202,6 +201,7 @@ class BaseSampleLogger(Callback):
             pl_module,
             unused=None
     ):
+        self.__init_dir_path()
         if isinstance(self.collector, list):
             for dataloader_idx in range(len(self.collector)):
                 results = self.collector[dataloader_idx].compute()
