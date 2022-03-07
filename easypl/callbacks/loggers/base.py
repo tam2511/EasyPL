@@ -79,8 +79,9 @@ class BaseSampleLogger(Callback):
     def __init_dir_path(self):
         if self.dir_path is None:
             root = os.path.join(os.getcwd(), 'lightning_logs')
+            os.makedirs(root, exist_ok=True)
             version_logs = [dir_name for dir_name in os.listdir(root) if os.path.isdir(os.path.join(root, dir_name))]
-            last_version = max(map(lambda x: int(x.split('_')[-1]), version_logs))
+            last_version = max(map(lambda x: int(x.split('_')[-1]), version_logs)) if len(version_logs) > 0 else 0
             self.dir_path = os.path.join(root, 'version_{}'.format(last_version), 'images')
         os.makedirs(self.dir_path, exist_ok=True)
 
