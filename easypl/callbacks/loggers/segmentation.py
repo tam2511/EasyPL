@@ -103,12 +103,12 @@ class SegmentationImageLogger(BaseImageLogger):
                 for color_i in range(3):
                     color_mask[:, :, color_i].fill(self.colors[class_idx][color_i])
                 pred_mask = np.where(
-                    samples[i]['pred_mask'] == class_idx,
+                    (samples[i]['pred_mask'] == class_idx).repeat(3, -1).reshape(*samples[i]['pred_mask'].shape, 3),
                     color_mask,
                     pred_mask
                 )
                 target_mask = np.where(
-                    samples[i]['target_mask'] == class_idx,
+                    (samples[i]['target_mask'] == class_idx).repeat(3, -1).reshape(*samples[i]['target_mask'].shape, 3),
                     color_mask,
                     target_mask
                 )
