@@ -214,6 +214,7 @@ class BaseSampleLogger(Callback):
             samples = [self.get_log(result['data'], result['output'], result['target']) for result in results]
             self.__log(samples)
             self.collector.reset()
+        self.epoch += 1
 
     def on_train_epoch_end(
             self,
