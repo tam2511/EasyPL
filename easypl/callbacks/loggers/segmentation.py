@@ -98,15 +98,18 @@ class SegmentationImageLogger(BaseImageLogger):
     def _log_on_disk(self, samples: list, dataloader_idx: int):
         for i in range(len(samples)):
             pred_mask, target_mask = np.copy(samples[i]['image']), np.copy(samples[i]['image'])
+            color_mask = np.zeros_like(samples[i]['image'])
             for class_idx in range(self.num_classes):
+                for color_i in range(3):
+                    color_mask[:, :, color_i].fill(self.colors[class_idx][color_i])
                 pred_mask = np.where(
                     samples[i]['pred_mask'] == class_idx,
-                    self.colors[class_idx],
+                    color_mask,
                     pred_mask
                 )
                 target_mask = np.where(
                     samples[i]['target_mask'] == class_idx,
-                    self.colors[class_idx],
+                    color_mask,
                     target_mask
                 )
             pred_mask = (pred_mask + samples[i]['image']) // 2
