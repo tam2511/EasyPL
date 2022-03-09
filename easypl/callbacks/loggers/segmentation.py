@@ -58,8 +58,8 @@ class SegmentationImageLogger(BaseImageLogger):
         self.pad = 20
         # self.legend = self.__get_legend()
 
-    def get_log(self, sample, output, target) -> Dict:
-        image = self.inv_transform(image=sample)['image'].astype('uint8')
+    def get_log(self, sample, output, target, dataloader_idx=0) -> Dict:
+        image = self.inv_transform[dataloader_idx](image=sample)['image'].astype('uint8')
         if not isinstance(output, torch.Tensor):
             raise ValueError('Output must be torch.Tensor type.')
         if not isinstance(target, torch.Tensor):

@@ -30,8 +30,8 @@ class BaseImageLogger(BaseSampleLogger):
 
     def __init_transform(self, trainer):
         if self.phase == 'train':
-            self.inv_transform = inv_transform(
-                trainer.train_dataloader.dataset.datasets.transform.transforms.transforms)
+            self.inv_transform = [inv_transform(
+                trainer.train_dataloader.dataset.datasets.transform.transforms.transforms)]
             return
         self.inv_transform = []
         if self.phase == 'val':

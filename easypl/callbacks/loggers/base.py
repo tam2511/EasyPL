@@ -85,7 +85,7 @@ class BaseSampleLogger(Callback):
             self.dir_path = os.path.join(root, 'version_{}'.format(last_version), 'images')
         os.makedirs(self.dir_path, exist_ok=True)
 
-    def get_log(self, sample, output, target) -> Dict:
+    def get_log(self, sample, output, target, dataloader_idx=0) -> Dict:
         raise NotImplementedError
 
     def _log_wandb(self, samples: list, dataloader_idx: int):
@@ -218,12 +218,18 @@ class BaseSampleLogger(Callback):
         if isinstance(self.collector, list):
             for dataloader_idx in range(len(self.collector)):
                 results = self.collector[dataloader_idx].compute()
-                samples = [self.get_log(result['data'], result['output'], result['target']) for result in results]
+                samples = [
+                    self.get_log(result['data'], result['output'], result['target'], dataloader_idx)
+                    for result in results
+                ]
                 self.__log(samples, dataloader_idx)
                 self.collector[dataloader_idx].reset()
         else:
             results = self.collector.compute()
-            samples = [self.get_log(result['data'], result['output'], result['target']) for result in results]
+            samples = [
+                self.get_log(result['data'], result['output'], result['target'])
+                for result in results
+            ]
             self.__log(samples)
             self.collector.reset()
         self.epoch += 1
