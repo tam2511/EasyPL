@@ -7,24 +7,28 @@ import random
 from uuid import uuid4
 import cv2
 import os
+from matplotlib.patches import Rectangle
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import matplotlib.pyplot as plt
 
 from easypl.callbacks.loggers.base_image import BaseImageLogger
 
 
 class SegmentationImageLogger(BaseImageLogger):
     def __init__(
-        self,
-        phase='train',
-        max_samples=1,
-        class_names=None,
-        num_classes=None,
-        mode='first',
-        sample_key=None,
-        score_func=None,
-        largest=True,
-        dir_path=None,
-        save_on_disk=False,
-        background_class=0
+            self,
+            phase='train',
+            max_samples=1,
+            class_names=None,
+            num_classes=None,
+            mode='first',
+            sample_key=None,
+            score_func=None,
+            largest=True,
+            dir_path=None,
+            save_on_disk=False,
+            background_class=0,
+            dpi=100
     ):
         super().__init__(
             phase=phase,
@@ -47,6 +51,10 @@ class SegmentationImageLogger(BaseImageLogger):
             self.num_classes = len(self.class_names)
         self.colors = self.__generate_colors()
         self.background_class = background_class
+        self.dpi = dpi
+
+        self.pad = 20
+        self.legend = self.__get_legend()
 
     def get_log(self, sample, output, target) -> Dict:
         image = self.inv_transform(image=sample)['image'].astype('uint8')
@@ -92,7 +100,42 @@ class SegmentationImageLogger(BaseImageLogger):
         self.save_on_disk = True
 
     def __generate_colors(self):
-        return np.random.randint(0, 255, (self.num_classes, 3))
+        hsv = [(i / self.num_classes, 1, 1) for i in range(self.num_classes)]
+        colors = list(map(lambda c: np.array(colorsys.hsv_to_rgb(*c)), hsv))
+        random.shuffle(colors)
+        return (np.stack(colors) * 255).astype('uint8')
+
+    def __get_legend(self):
+        classes = [self.class_names[idx] for idx in range(self.num_classes) if idx != self.background_class]
+        colors = [self.colors[idx] for idx in range(self.num_classes) if idx != self.background_class]
+        handles = [Rectangle((0, 0), 1, 1, color=tuple([_ / 255 for _ in color])) for color in colors]
+        #     stage 1
+        fig = plt.figure(dpi=self.dpi)
+        canvas = FigureCanvas(fig)
+        legend = fig.legend(handles, classes, loc='upper center')
+        canvas.draw()
+        w, h = legend.get_window_extent().width, legend.get_window_extent().height
+        plt.close(fig)
+        #     stage 2
+        fig = plt.figure(figsize=((w + self.pad) / 100, (h + self.pad) / 100), dpi=self.dpi)
+        canvas = FigureCanvas(fig)
+        fig.legend(handles, classes, loc='upper center')
+        canvas.draw()
+        image = np.frombuffer(canvas.tostring_rgb(), dtype='uint8').reshape(fig.canvas.get_width_height()[::-1] + (3,))
+        plt.close(fig)
+        return image
+
+    def __add_legend(self, image):
+        image_h, image_w, _ = image.shape
+        legend_h, legend_w, _ = self.legend.shape
+        w = max(image_w, legend_w) + 2 * self.pad
+        x_image = (w - image_w) // 2
+        x_legend = (w - legend_w) // 2
+        result = np.ones((image_h + legend_h + 3 * self.pad, w, 3), dtype=np.uint8) * 255
+        result[self.pad:image_h + self.pad, x_image:x_image + image_w, :] = image
+        result[image_h + 2 * self.pad: image_h + legend_h + 2 * self.pad, x_legend:x_legend + legend_w, :] = self.legend
+        result = cv2.rectangle(result, (x_image, self.pad), (x_image + image_w, image_h + self.pad), (0, 0, 0), 2)
+        return result
 
     def _log_on_disk(self, samples: list, dataloader_idx: int):
         for i in range(len(samples)):
@@ -113,9 +156,10 @@ class SegmentationImageLogger(BaseImageLogger):
                     color_mask,
                     target_mask
                 )
-            pred_mask = (pred_mask + samples[i]['image']) // 2
-            target_mask = (target_mask + samples[i]['image']) // 2
-
+            pred_mask = cv2.addWeighted(pred_mask, 0.5, samples[i]['image'], 0.5, 0.0)
+            target_mask = cv2.addWeighted(target_mask, 0.5, samples[i]['image'], 0.5, 0.0)
+            pred_mask = self.__add_legend(pred_mask)
+            target_mask = self.__add_legend(target_mask)
             dest_dir = os.path.join(self.dir_path, f'epoch_{self.epoch}', self.phase)
             dest_dir = os.path.join(dest_dir, f'dataloader_{dataloader_idx}')
             os.makedirs(dest_dir, exist_ok=True)
