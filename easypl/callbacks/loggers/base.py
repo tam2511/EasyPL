@@ -112,8 +112,20 @@ class BaseSampleLogger(Callback):
         if self.save_on_disk:
             self._log_on_disk(samples, dataloader_idx)
 
-    def on_train_start(self, trainer, pl_module):
+    def __on_start(self, trainer, pl_module):
         pl_module.return_output_phase[self.phase] = True
+
+    def on_train_start(self, trainer, pl_module):
+        self.__on_start(trainer, pl_module)
+
+    def on_validation_start(self, trainer, pl_module):
+        self.__on_start(trainer, pl_module)
+
+    def on_test_start(self, trainer, pl_module):
+        self.__on_start(trainer, pl_module)
+
+    def on_predict_start(self, trainer, pl_module):
+        self.__on_start(trainer, pl_module)
 
     def __main_post_init(self, trainer, pl_module):
         if self.logger is None:
