@@ -21,6 +21,7 @@ class SegmentationImageLogger(BaseImageLogger):
             max_samples=1,
             class_names=None,
             num_classes=None,
+            max_log_classes=None,
             mode='first',
             sample_key=None,
             score_func=None,
@@ -52,9 +53,10 @@ class SegmentationImageLogger(BaseImageLogger):
         self.colors = self.__generate_colors()
         self.background_class = background_class
         self.dpi = dpi
+        self.max_log_classes = self.num_classes if max_log_classes is None else max_log_classes
 
         self.pad = 20
-        self.legend = self.__get_legend()
+        # self.legend = self.__get_legend()
 
     def get_log(self, sample, output, target) -> Dict:
         image = self.inv_transform(image=sample)['image'].astype('uint8')
@@ -105,9 +107,9 @@ class SegmentationImageLogger(BaseImageLogger):
         random.shuffle(colors)
         return (np.stack(colors) * 255).astype('uint8')
 
-    def __get_legend(self):
-        classes = [self.class_names[idx] for idx in range(self.num_classes) if idx != self.background_class]
-        colors = [self.colors[idx] for idx in range(self.num_classes) if idx != self.background_class]
+    def __get_legend(self, classes_idxs):
+        classes = [self.class_names[idx] for idx in classes_idxs if idx != self.background_class]
+        colors = [self.colors[idx] for idx in classes_idxs if idx != self.background_class]
         handles = [Rectangle((0, 0), 1, 1, color=tuple([_ / 255 for _ in color])) for color in colors]
         #     stage 1
         fig = plt.figure(dpi=self.dpi)
@@ -125,15 +127,16 @@ class SegmentationImageLogger(BaseImageLogger):
         plt.close(fig)
         return image
 
-    def __add_legend(self, image):
+    def __add_legend(self, image, classes_idxs):
+        legend = self.__get_legend(classes_idxs)
         image_h, image_w, _ = image.shape
-        legend_h, legend_w, _ = self.legend.shape
+        legend_h, legend_w, _ = legend.shape
         w = max(image_w, legend_w) + 2 * self.pad
         x_image = (w - image_w) // 2
         x_legend = (w - legend_w) // 2
         result = np.ones((image_h + legend_h + 3 * self.pad, w, 3), dtype=np.uint8) * 255
         result[self.pad:image_h + self.pad, x_image:x_image + image_w, :] = image
-        result[image_h + 2 * self.pad: image_h + legend_h + 2 * self.pad, x_legend:x_legend + legend_w, :] = self.legend
+        result[image_h + 2 * self.pad: image_h + legend_h + 2 * self.pad, x_legend:x_legend + legend_w, :] = legend
         result = cv2.rectangle(result, (x_image, self.pad), (x_image + image_w, image_h + self.pad), (0, 0, 0), 2)
         return result
 
@@ -158,8 +161,12 @@ class SegmentationImageLogger(BaseImageLogger):
                 )
             pred_mask = cv2.addWeighted(pred_mask, 0.5, samples[i]['image'], 0.5, 0.0)
             target_mask = cv2.addWeighted(target_mask, 0.5, samples[i]['image'], 0.5, 0.0)
-            pred_mask = self.__add_legend(pred_mask)
-            target_mask = self.__add_legend(target_mask)
+            pred_class_idxs, _ = np.unique(samples[i]['pred_mask'], return_counts=True)
+            pred_class_idxs = [class_idx for class_idx in pred_class_idxs if class_idx != self.background_class]
+            target_class_idxs, _ = np.unique(samples[i]['target_mask'], return_counts=True)
+            target_class_idxs = [class_idx for class_idx in target_class_idxs if class_idx != self.background_class]
+            pred_mask = self.__add_legend(pred_mask, pred_class_idxs[:self.max_log_classes])
+            target_mask = self.__add_legend(target_mask, target_class_idxs[:self.max_log_classes])
             dest_dir = os.path.join(self.dir_path, f'epoch_{self.epoch}', self.phase)
             dest_dir = os.path.join(dest_dir, f'dataloader_{dataloader_idx}')
             os.makedirs(dest_dir, exist_ok=True)
