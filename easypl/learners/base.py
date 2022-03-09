@@ -59,6 +59,7 @@ class BaseLearner(LightningModule):
             'train': False,
             'val': False,
             'test': False,
+            'predict': False,
         }
 
     def common_step(self, batch, batch_idx) -> dict:
