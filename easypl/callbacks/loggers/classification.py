@@ -83,11 +83,10 @@ class ClassificationImageLogger(BaseImageLogger):
         self.save_on_disk = True
 
     def __get_table(self, preds: torch.Tensor, targets: torch.Tensor):
-        _, preds_class = torch.topk(preds, dim=0, k=self.max_log_classes, largest=True)
-        targets = one_hot(targets, num_classes=self.num_classes) if targets.ndim == 0 else targets
-        targets_class = torch.topk(targets, dim=0, k=self.max_log_classes, largest=True)
+        _, preds_class = torch.topk(preds.float(), dim=0, k=self.max_log_classes, largest=True)
+        _, targets_class = torch.topk(targets.float(), dim=0, k=self.max_log_classes, largest=True)
         targets_class = torch.tensor([class_idx for class_idx in targets_class if class_idx not in preds_class])
-        class_idxs = torch.cat([preds_class, targets_class])
+        class_idxs = torch.cat([preds_class, targets_class]).long()
         classes = [self.class_names[idx] for idx in class_idxs]
         data = [{'pred': preds[idx].item(), 'ground truth': targets[idx].item()} for idx in class_idxs]
         dt = pd.DataFrame(data, index=classes)
