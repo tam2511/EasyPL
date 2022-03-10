@@ -53,10 +53,9 @@ class SegmentationImageLogger(BaseImageLogger):
         self.colors = self.__generate_colors()
         self.background_class = background_class
         self.dpi = dpi
-        self.max_log_classes = self.num_classes if max_log_classes is None else max_log_classes
+        self.max_log_classes = self.num_classes if max_log_classes is None else min(max_log_classes, self.num_classes)
 
         self.pad = 20
-        # self.legend = self.__get_legend()
 
     def get_log(self, sample, output, target, dataloader_idx=0) -> Dict:
         image = self.inv_transform[dataloader_idx](image=sample)['image'].astype('uint8')
@@ -95,7 +94,7 @@ class SegmentationImageLogger(BaseImageLogger):
             }
             for _ in samples
         ]
-        self.logger.log_image(key=self.tag, images=images, masks=masks)
+        self.logger.log_image(key=f'{self.tag}_dataloader {dataloader_idx}', images=images, masks=masks)
 
     def _log_tensorboard(self, samples: list, dataloader_idx: int):
         warnings.warn(f'TensorboardLogger does not supported. Images will save on disk', Warning, stacklevel=2)
@@ -140,6 +139,22 @@ class SegmentationImageLogger(BaseImageLogger):
         result = cv2.rectangle(result, (x_image, self.pad), (x_image + image_w, image_h + self.pad), (0, 0, 0), 2)
         return result
 
+    def __merge_masks(self, sample, pred_mask, target_mask):
+        pred_mask = cv2.addWeighted(pred_mask, 0.5, sample['image'], 0.5, 0.0)
+        target_mask = cv2.addWeighted(target_mask, 0.5, sample['image'], 0.5, 0.0)
+        pred_class_idxs, _ = np.unique(sample['pred_mask'], return_counts=True)
+        pred_class_idxs = [class_idx for class_idx in pred_class_idxs if class_idx != self.background_class]
+        target_class_idxs, _ = np.unique(sample['target_mask'], return_counts=True)
+        target_class_idxs = [class_idx for class_idx in target_class_idxs if class_idx != self.background_class]
+        pred_mask = self.__add_legend(pred_mask, pred_class_idxs[:self.max_log_classes])
+        target_mask = self.__add_legend(target_mask, target_class_idxs[:self.max_log_classes])
+        pred_h, pred_w, _ = pred_mask.shape
+        target_h, target_w, _ = target_mask.shape
+        result = np.ones((max(pred_h, target_h), pred_w + target_w, 3), dtype='uint8') * 255
+        result[:pred_h, :pred_w, :] = pred_mask
+        result[:target_h, pred_w:pred_w + target_w, :] = target_mask
+        return result
+
     def _log_on_disk(self, samples: list, dataloader_idx: int):
         for i in range(len(samples)):
             pred_mask, target_mask = np.copy(samples[i]['image']), np.copy(samples[i]['image'])
@@ -159,17 +174,9 @@ class SegmentationImageLogger(BaseImageLogger):
                     color_mask,
                     target_mask
                 )
-            pred_mask = cv2.addWeighted(pred_mask, 0.5, samples[i]['image'], 0.5, 0.0)
-            target_mask = cv2.addWeighted(target_mask, 0.5, samples[i]['image'], 0.5, 0.0)
-            pred_class_idxs, _ = np.unique(samples[i]['pred_mask'], return_counts=True)
-            pred_class_idxs = [class_idx for class_idx in pred_class_idxs if class_idx != self.background_class]
-            target_class_idxs, _ = np.unique(samples[i]['target_mask'], return_counts=True)
-            target_class_idxs = [class_idx for class_idx in target_class_idxs if class_idx != self.background_class]
-            pred_mask = self.__add_legend(pred_mask, pred_class_idxs[:self.max_log_classes])
-            target_mask = self.__add_legend(target_mask, target_class_idxs[:self.max_log_classes])
+            result_image = self.__merge_masks(samples[i], pred_mask, target_mask)
             dest_dir = os.path.join(self.dir_path, f'epoch_{self.epoch}', self.phase)
             dest_dir = os.path.join(dest_dir, f'dataloader_{dataloader_idx}')
             os.makedirs(dest_dir, exist_ok=True)
             guid = str(uuid4())
-            cv2.imwrite(os.path.join(dest_dir, f'{guid}_pred.jpg'), cv2.cvtColor(pred_mask, cv2.COLOR_RGB2BGR))
-            cv2.imwrite(os.path.join(dest_dir, f'{guid}_gt.jpg'), cv2.cvtColor(target_mask, cv2.COLOR_RGB2BGR))
+            cv2.imwrite(os.path.join(dest_dir, f'{guid}.jpg'), cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR))
