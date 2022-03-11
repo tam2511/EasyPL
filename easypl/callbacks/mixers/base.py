@@ -67,7 +67,7 @@ class MixBaseCallback(Callback):
         self.data_keys = pl_module.data_keys
         self.target_keys = pl_module.target_keys
         self.__check_device(batch)
-        mix_idxs = np.where(np.random.uniform(size=self.__get_batch_size(batch)) > self.p)[0]
+        mix_idxs = np.where(np.random.uniform(size=self.__get_batch_size(batch)) < self.p)[0]
         # TODO: multi threading mixing in MixBaseCallback
         for idx in mix_idxs:
             sample1 = {key: batch[key][idx] for key in batch}
