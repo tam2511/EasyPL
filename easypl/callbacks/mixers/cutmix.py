@@ -31,7 +31,7 @@ class Cutmix(MixBaseCallback):
         self.domen = domen
 
     def __random_bbox(self, height, width, alpha):
-        ratio = torch.sqrt(1. - alpha)
+        ratio = torch.sqrt(1. - torch.tensor(alpha))
         w = width * ratio
         h = height * ratio
 
