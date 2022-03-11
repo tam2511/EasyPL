@@ -19,6 +19,7 @@ class ClassificatorLearner(BaseLearner):
             test_metrics: Optional[List[Metric]] = None,
             data_keys: Optional[List[str]] = None,
             target_keys: Optional[List[str]] = None,
+            multilabel: bool = False
     ):
         super().__init__(
             model=model,
@@ -33,7 +34,7 @@ class ClassificatorLearner(BaseLearner):
         )
         if len(data_keys) != 1 and len(target_keys) != 1:
             raise ValueError('"data_keys" and "target_keys" must be one element')
-        self.multilabel = False
+        self.multilabel = multilabel
 
     __init__.__doc__ = BaseLearner.__init__.__doc__
 
@@ -43,7 +44,6 @@ class ClassificatorLearner(BaseLearner):
     def common_step(self, batch, batch_idx):
         images = batch[self.data_keys[0]]
         targets = batch[self.target_keys[0]]
-        self.multilabel = targets.ndim > 1
         output = self.forward(images)
         loss = self.loss_f(output, targets.float() if self.multilabel else targets)
         return {
