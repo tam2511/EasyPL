@@ -40,6 +40,7 @@ class Mixup(MixBaseCallback):
         raise NotImplementedError
 
     def mix(self, sample1: dict, sample2: dict) -> dict:
+        sample2 = {key: sample2[key][0] for key in sample2}
         alpha = np.random.beta(self.alpha, self.alpha)
         if self.domen == 'classification':
             return self.__mix_classificate(sample1, sample2, alpha)
