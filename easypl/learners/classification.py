@@ -42,14 +42,17 @@ class ClassificatorLearner(BaseLearner):
         return self.model(inputs)
 
     def common_step(self, batch, batch_idx):
-        images = batch[self.data_keys[0]]
+        samples = batch[self.data_keys[0]]
         targets = batch[self.target_keys[0]]
-        output = self.forward(images)
-        loss = self.loss_f(output, targets.float() if self.multilabel else targets)
+        output = self.forward(samples)
+        loss = self.loss_f(
+            output,
+            targets.float() if self.multilabel or targets.ndim != 1 else targets.long()
+        )
         return {
             'loss': loss,
             'output_for_metric': output.sigmoid() if self.multilabel else output.argmax(dim=1),
-            'target_for_metric': targets,
+            'target_for_metric': targets if targets.ndim == 1 or self.multilabel else targets.argmax(dim=1),
             'output_for_log': output.sigmoid() if self.multilabel else output.softmax(dim=1),
             'target_for_log': targets
         }
