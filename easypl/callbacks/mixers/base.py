@@ -69,6 +69,9 @@ class MixBaseCallback(Callback):
         self.__check_device(batch)
         mix_idxs = np.where(np.random.uniform(size=self.__get_batch_size(batch)) < self.p)[0]
         # TODO: multi threading mixing in MixBaseCallback
+        for key in self.target_keys:
+            if isinstance(batch[key], torch.Tensor):
+                batch[key] = batch[key].float()
         for idx in mix_idxs:
             sample1 = {key: batch[key][idx] for key in batch}
             sample2 = self.__generate_batch_sample(batch=batch, index_ignore=idx) \
