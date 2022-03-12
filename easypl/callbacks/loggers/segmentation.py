@@ -73,10 +73,7 @@ class SegmentationImageLogger(BaseImageLogger):
             target_mask = target.cpu().numpy().astype('int32')
         elif target.ndim == 3:
             # TODO multilabel segmentation mask in image_logger
-            target_mask = np.ones(
-                target.shape[1:],
-                dtype='uint8'
-            ) * self.background_class if self.background_class >= 0 else np.zeros(target.shape[1:], dtype='uint8')
+            target_mask = target.argmax(dim=0).cpu().numpy().astype('int32')
         else:
             raise ValueError(f'Target must to have 2 or 3 dims (but have {target.ndim}!).')
         return {
