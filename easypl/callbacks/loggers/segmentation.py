@@ -72,6 +72,7 @@ class SegmentationImageLogger(BaseImageLogger):
         if target.ndim == 2:
             target_mask = target.cpu().numpy().astype('int32')
         elif target.ndim == 3:
+            # TODO multilabel segmentation mask in image_logger
             target_mask = np.ones(
                 target.shape[1:],
                 dtype='uint8'
