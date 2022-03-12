@@ -78,7 +78,7 @@ class SegmentationImageLogger(BaseImageLogger):
                 dtype='uint8'
             ) * self.background_class if self.background_class >= 0 else np.zeros(target.shape[1:], dtype='uint8')
         else:
-            raise ValueError(f'Target must to have 2 dims (but have {target.ndim}!).')
+            raise ValueError(f'Target must to have 2 or 3 dims (but have {target.ndim}!).')
         return {
             'image': image,
             'pred_mask': pred_mask,
