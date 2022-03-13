@@ -36,10 +36,10 @@ class Mosaic(MixBaseCallback):
     def __random_bbox(self, height, width, height_bbox, width_bbox):
         cx = torch.tensor(np.random.randint(width_bbox // 2, width - width_bbox // 2))
         cy = torch.tensor(np.random.randint(height_bbox // 2, height - height_bbox // 2))
-        x1 = torch.clip(cx - width_bbox // 2, 0, width_bbox).long()
-        y1 = torch.clip(cy - height_bbox // 2, 0, height_bbox).long()
-        x2 = torch.clip(cx + width_bbox // 2, 0, width_bbox).long()
-        y2 = torch.clip(cy + height_bbox // 2, 0, height_bbox).long()
+        x1 = torch.clip(cx - width_bbox // 2, 0, width).long()
+        y1 = torch.clip(cy - height_bbox // 2, 0, height).long()
+        x2 = torch.clip(cx + width_bbox // 2, 0, width).long()
+        y2 = torch.clip(cy + height_bbox // 2, 0, height).long()
         return x1, y1, x2, y2
 
     def __mix_classificate(self, sample1: dict, samples: dict) -> dict:
