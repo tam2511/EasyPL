@@ -34,8 +34,8 @@ class Mosaic(MixBaseCallback):
         self.domen = domen
 
     def __random_bbox(self, height, width, height_bbox, width_bbox):
-        cx = np.random.randint(width_bbox // 2, width - width_bbox // 2)
-        cy = np.random.randint(height_bbox // 2, height - height_bbox // 2)
+        cx = torch.from_numpy(np.random.randint(width_bbox // 2, width - width_bbox // 2))
+        cy = torch.from_numpy(np.random.randint(height_bbox // 2, height - height_bbox // 2))
         x1 = torch.clip(cx - width_bbox // 2, 0, width_bbox).long()
         y1 = torch.clip(cy - height_bbox // 2, 0, height_bbox).long()
         x2 = torch.clip(cx + width_bbox // 2, 0, width_bbox).long()
