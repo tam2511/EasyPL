@@ -36,14 +36,16 @@ class MixBaseCallback(Callback):
 
     def __generate_dataset_sample(self, dataloader):
         dataset = dataloader.dataset.datasets
-        sample = [dataset[i] for i in np.random.randint(0, len(dataset) - 1, self.samples_per)]
+        samples_per = np.random.choice(self.samples_per) if isinstance(self.samples_per, list) else self.samples_per
+        sample = [dataset[i] for i in np.random.randint(0, len(dataset) - 1, samples_per)]
         sample = dataloader.loaders.collate_fn(sample)
         return to_(sample)
 
     def __generate_batch_sample(self, batch: dict, index_ignore: int = None):
         batch_size = self.__get_batch_size(batch)
+        samples_per = np.random.choice(self.samples_per) if isinstance(self.samples_per, list) else self.samples_per
         idxs = torch.from_numpy(
-            np.random.choice([idx for idx in range(batch_size) if idx != index_ignore], self.samples_per))
+            np.random.choice([idx for idx in range(batch_size) if idx != index_ignore], samples_per))
         sample = {
             key: batch[key][idxs] if isinstance(batch[key], torch.Tensor) else [batch[key][idx] for idx in idxs]
             for key in batch
