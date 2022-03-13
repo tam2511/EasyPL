@@ -74,9 +74,10 @@ class MixBaseCallback(Callback):
         for key in self.target_keys:
             if isinstance(batch[key], torch.Tensor):
                 batch[key] = batch[key].float()
+        batch_ = {key: torch.clone(batch[key]) for key in batch}
         for idx in mix_idxs:
-            sample1 = {key: batch[key][idx] for key in batch}
-            sample2 = self.__generate_batch_sample(batch=batch, index_ignore=idx) \
+            sample1 = {key: batch_[key][idx] for key in batch}
+            sample2 = self.__generate_batch_sample(batch=batch_, index_ignore=idx) \
                 if self.on_batch else self.__generate_dataset_sample(trainer.train_dataloader)
             mix_sample = self.mix(sample1, sample2)
             for key in batch:
