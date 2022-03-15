@@ -1,7 +1,7 @@
 from pytorch_lightning.callbacks import BaseFinetuning
 
 
-class SequentialFinetune(BaseFinetuning):
+class SequentialFinetuning(BaseFinetuning):
     """Callback for sequence unfreezing model"""
 
     def __init__(
