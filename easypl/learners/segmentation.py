@@ -39,8 +39,7 @@ class SegmentationLearner(BaseLearner):
 
     __init__.__doc__ = BaseLearner.__init__.__doc__
 
-    def forward(self, batch):
-        samples = batch[self.data_keys[0]]
+    def forward(self, samples):
         return self.model(samples)
 
     def loss_step(self, outputs, targets):
