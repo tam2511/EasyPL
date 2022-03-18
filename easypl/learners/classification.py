@@ -38,7 +38,7 @@ class ClassificatorLearner(BaseLearner):
 
     __init__.__doc__ = BaseLearner.__init__.__doc__
 
-    def forward(self, batch):
+    def forward(self, samples):
         return self.model(samples)
 
     def loss_step(self, outputs, targets):
