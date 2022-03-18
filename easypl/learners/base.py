@@ -1,4 +1,4 @@
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Dict
 from numbers import Number
 import warnings
 
@@ -9,6 +9,7 @@ from torchmetrics import Metric
 from easypl.lr_schedulers import WrapperScheduler
 from easypl.metrics.base import MetricsList
 from easypl.optimizers import WrapperOptimizer
+from easypl.utilities.data import slice_by_batch_size
 
 
 class BaseLearner(LightningModule):
@@ -62,14 +63,31 @@ class BaseLearner(LightningModule):
             'predict': False,
         }
 
-    def common_step(self, batch, batch_idx) -> dict:
+    def loss_step(self, outputs, targets) -> Dict:
         """
         @return: {
-            'loss': tensor or dict with 'main' key,
-            'output_for_metric': ...,
-            'target_for_metric': ...,
-            'output_for_log': ...,
-            'target_for_log': ...
+            'loss': torch.Tensor,
+            'log': {...},
+        }
+        """
+        raise NotImplementedError
+
+    def get_targets(self, batch) -> Dict:
+        """
+        @return: {
+            'loss': ...,
+            'metric': ...,
+            'log': ...,
+        }
+        """
+        raise NotImplementedError
+
+    def get_outputs(self, batch):
+        """
+        @return: {
+            'loss': ...,
+            'metric': ...,
+            'log': ...,
         }
         """
         raise NotImplementedError
@@ -77,18 +95,26 @@ class BaseLearner(LightningModule):
     def __step(self, batch, batch_idx, dataloader_idx=0, phase='train', log_on_step=True, log_on_epoch=False,
                log_prog_bar=True):
         log_prefix = f'{phase}_{dataloader_idx}' if dataloader_idx > 0 else phase
-        result = self.common_step(batch, batch_idx)
-        self.__log(f'{log_prefix}/loss', result['loss'], on_step=log_on_step, on_epoch=log_on_epoch,
+        targets = self.get_targets(batch)
+        outputs = self.get_outputs(batch)
+        if 'batch_size' in batch:
+            slice_by_batch_size(targets, batch['batch_size'], ['loss', 'metric'])
+            slice_by_batch_size(outputs, batch['batch_size'], ['loss', 'metric'])
+        loss = self.loss_step(outputs['loss'], targets['loss'])
+        self.__log(f'{log_prefix}/loss', loss['loss'], on_step=log_on_step, on_epoch=log_on_epoch,
                    prog_bar=log_prog_bar)
+        for key in loss['log']:
+            self.__log(f'{log_prefix}/loss_{key}', loss['log'][key], on_step=log_on_step, on_epoch=log_on_epoch,
+                       prog_bar=log_prog_bar)
         if phase == 'train':
             self.__log_lr()
-        if len(self.metrics[phase]) < dataloader_idx + 1:
+        if len(self.metrics[phase]) <= dataloader_idx:
             self.metrics[phase].append(self.metrics[phase][-1].clone())
-        self.metrics[phase][dataloader_idx].update(result['output_for_metric'], result['target_for_metric'])
-        ret = {'loss': result['loss'] if isinstance(result['loss'], torch.Tensor) else result['loss']['main']}
+        self.metrics[phase][dataloader_idx].update(outputs['metric'], targets['metric'])
+        ret = {'loss': loss['loss']}
         if self.return_output_phase[phase]:
-            ret['output'] = result['output_for_log']
-            ret['target'] = result['target_for_log']
+            ret['output'] = outputs['log']
+            ret['target'] = targets['log']
         return ret
 
     def __epoch_end(self, phase='train'):

@@ -39,21 +39,34 @@ class SegmentationLearner(BaseLearner):
 
     __init__.__doc__ = BaseLearner.__init__.__doc__
 
-    def forward(self, inputs):
-        return self.model(inputs)
+    def forward(self, samples):
+        return self.model(samples)
 
-    def common_step(self, batch, batch_idx):
-        images = batch[self.data_keys[0]]
-        targets = batch[self.target_keys[0]]
-        output = self.forward(images)
+    def loss_step(self, outputs, targets):
         loss = self.loss_f(
-            output,
-            targets.float() if self.multilabel or targets.ndim > 3 else targets.long()
+            outputs,
+            targets.float() if self.multilabel or targets.ndim != 1 else targets.long()
         )
         return {
             'loss': loss,
-            'output_for_metric': output.sigmoid() if self.multilabel else output.argmax(dim=1),
-            'target_for_metric': targets if targets.ndim == 3 or self.multilabel else targets.argmax(dim=1),
-            'output_for_log': output.sigmoid() if self.multilabel else output.softmax(dim=1),
-            'target_for_log': targets
+            'log': {
+                'loss': loss
+            }
+        }
+
+    def get_targets(self, batch):
+        targets = batch[self.target_keys[0]]
+        return {
+            'loss': targets.float() if self.multilabel or targets.ndim > 3 else targets.long(),
+            'metric': targets if targets.ndim == 3 or self.multilabel else targets.argmax(dim=1),
+            'log': targets
+        }
+
+    def get_outputs(self, batch):
+        samples = batch[self.data_keys[0]]
+        outputs = self.forward(samples)
+        return {
+            'loss': outputs,
+            'metric': outputs.sigmoid() if self.multilabel else outputs.argmax(dim=1),
+            'log': outputs.sigmoid() if self.multilabel else outputs.softmax(dim=1),
         }
