@@ -1,4 +1,4 @@
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Dict
 import numpy as np
 import torch
 
@@ -78,3 +78,15 @@ def grids(
         for h_idx in range(0, len(h_grids) - 1):
             grids_.append(((w_grids[w_idx], w_grids[w_idx + 1]), (h_grids[h_idx], h_grids[h_idx + 1])))
     return grids_
+
+
+def slice_by_batch_size(
+        object: Dict,
+        batch_size: int,
+        keys: Optional[List]
+):
+    for key in (object if keys is None else keys):
+        if isinstance(object[key], dict):
+            slice_by_batch_size(object[key], batch_size, None)
+        else:
+            object[key] = object[key][:batch_size]
