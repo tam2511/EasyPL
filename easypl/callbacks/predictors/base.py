@@ -202,7 +202,7 @@ class BaseTestTimeAugmentation(Callback):
                 dataloader_idx
             )
 
-    def on_validation_end(
+    def on_validation_epoch_end(
             self,
             trainer,
             pl_module
@@ -210,7 +210,7 @@ class BaseTestTimeAugmentation(Callback):
         if self.phase == 'val':
             self.on_phase_end(trainer, pl_module)
 
-    def on_test_end(
+    def on_test_epoch_end(
             self,
             trainer,
             pl_module

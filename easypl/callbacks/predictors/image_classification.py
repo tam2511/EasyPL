@@ -49,7 +49,9 @@ class ClassificationImageTestTimeAugmentation(BaseImageTestTimeAugmentation):
         return ret_sample
 
     def preprocessing(self, sample: Dict, dataloader_idx: int) -> Dict:
-        sample[self.data_keys[0]] = self.inv_transform[dataloader_idx](image=sample[self.data_keys[0]])['image']
+        sample[self.data_keys[0]] = self.inv_transform[dataloader_idx](
+            image=sample[self.data_keys[0]].cpu().numpy()
+        )['image']
         return sample
 
     def postprocessing(self, sample: Dict, dataloader_idx: int) -> Dict:
