@@ -1,0 +1,3 @@
+from easypl.callbacks.predictors.base import BaseTestTimeAugmentation
+from easypl.callbacks.predictors.base_image import BaseImageTestTimeAugmentation
+from easypl.callbacks.predictors.image_classification import ClassificationImageTestTimeAugmentation

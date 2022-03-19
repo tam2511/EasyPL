@@ -55,3 +55,11 @@ def inv_transform(transforms: list):
                           max_pixel_value=1.0))
     inv_transforms = inv_transforms[::-1]
     return Compose(inv_transforms)
+
+def main_transform(transforms: list):
+    main_transforms = []
+    for transform_idx in range(len(transforms)):
+        transform_ = transforms[transform_idx]
+        if isinstance(transform_, ToTensorV2) or isinstance(transform_, Normalize):
+            main_transforms.append(transform_)
+    return Compose(main_transforms)

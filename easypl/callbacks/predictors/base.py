@@ -3,7 +3,6 @@ from pytorch_lightning.callbacks import Callback
 from typing import List, Dict
 
 
-
 class BaseTestTimeAugmentation(Callback):
     """ Base callback for test-time-augmentation """
 
@@ -23,14 +22,17 @@ class BaseTestTimeAugmentation(Callback):
         self.augmentation_method = augmentation_method
         self.phase = phase
 
-        self.is_init = False
+        self.data_keys = None
         self.collate_fns = []
         self.metrics = []
 
+    def post_init(self, trainer, pl_module):
+        pass
+
     def on_phase_start(self, trainer, pl_module):
-        if self.is_init:
+        if self.data_keys is None:
             pl_module.return_output_phase[self.phase] = True
-            self.is_init = True
+            self.data_keys = pl_module.data_keys
             for dataloader_idx in range(len(trainer.__getattribute__(f'{self.phase}_dataloaders'))):
                 self.collate_fns.append(
                     trainer.__getattribute__(f'{self.phase}_dataloaders')[dataloader_idx].collate_fn)
@@ -39,6 +41,7 @@ class BaseTestTimeAugmentation(Callback):
                 )[dataloader_idx].collate_fn = self.__collate_fn(dataloader_idx)
             if self.phase != 'predict':
                 self.metrics = [pl_module.metrics[self.phase][0].clone()]
+            self.post_init(trainer, pl_module)
 
     def on_phase_batch_end(
             self,
@@ -98,10 +101,10 @@ class BaseTestTimeAugmentation(Callback):
     def augment(self, sample: Dict, augmentation) -> Dict:
         raise NotImplementedError
 
-    def preprocessing(self, sample: Dict) -> Dict:
+    def preprocessing(self, sample: Dict, dataloader_idx: int) -> Dict:
         return sample
 
-    def postprocessing(self, sample: Dict) -> Dict:
+    def postprocessing(self, sample: Dict, dataloader_idx: int) -> Dict:
         return sample
 
     def __collate_fn(self, dataloader_idx):
@@ -109,14 +112,14 @@ class BaseTestTimeAugmentation(Callback):
             # TODO collate_fn_wrapper multiprocessing optimization
             batch_size = len(batch)
             samples = [
-                _ for _ in batch
+                self.preprocessing(_, dataloader_idx) for _ in batch
             ]
             augmented_samples = []
             for augmentation in self.augmentations:
                 for sample in samples:
                     augmented_samples.append(self.augment(sample, augmentation))
             samples = samples + augmented_samples
-            samples = [self.postprocessing(sample) for sample in samples]
+            samples = [self.postprocessing(sample, dataloader_idx) for sample in samples]
 
             batch = self.collate_fns[dataloader_idx](samples)
             batch['batch_size'] = batch_size
