@@ -19,13 +19,13 @@ class ClassificationImageTestTimeAugmentation(BaseImageTestTimeAugmentation):
         """
         super().__init__(n=n, augmentations=augmentations, augmentation_method=augmentation_method, phase=phase)
         self.reduce_method = reduce_method
-        if len(self.data_keys) != 1:
-            raise ValueError(f'Size of "data_keys" must have len 1, but have len {len(self.data_keys)}')
         self.multilabel = None
 
     def post_init(self, trainer, pl_module):
         super().post_init(trainer, pl_module)
         self.multilabel = pl_module.multilabel
+        if len(self.data_keys) != 1:
+            raise ValueError(f'Size of "data_keys" must have len 1, but have len {len(self.data_keys)}')
 
     def metric_formatting(self, outputs, targets):
         outputs = outputs.sigmoid() if self.multilabel else outputs.argmax(dim=1)
