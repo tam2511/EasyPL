@@ -23,7 +23,12 @@ class BaseTestTimeAugmentation(Callback):
         self.augmentation_method = augmentation_method
         self.phase = phase
 
-        self.current_n = n
+        if self.augmentation_method == 'first':
+            self.current_n = min(self.n, len(self.augmentations))
+        elif self.augmentation_method == 'random':
+            self.current_n = self.n
+        else:
+            self.current_n = len(self.augmentations)
         self.data_keys = None
         self.collate_fns = []
         self.metrics = []
@@ -111,14 +116,11 @@ class BaseTestTimeAugmentation(Callback):
 
     def __augmentation_generator(self):
         if self.augmentation_method == 'first':
-            self.current_n = min(self.n, len(self.augmentations))
             return (augmentation for augmentation in self.augmentations[:self.n])
         elif self.augmentation_method == 'random':
             augmentations = np.random.choice(self.augmentations, self.n)
-            self.current_n = self.n
             return (augmentation for augmentation in augmentations)
         else:
-            self.current_n = len(self.augmentations)
             return (augmentation for augmentation in self.augmentations)
 
     def __collate_fn(self, dataloader_idx):
