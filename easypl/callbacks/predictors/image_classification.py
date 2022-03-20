@@ -28,7 +28,6 @@ class ClassificationImageTestTimeAugmentation(BaseImageTestTimeAugmentation):
             raise ValueError(f'Size of "data_keys" must have len 1, but have len {len(self.data_keys)}')
 
     def metric_formatting(self, outputs, targets):
-        outputs = outputs.sigmoid() if self.multilabel else outputs.argmax(dim=1)
         targets = targets if targets.ndim == 1 or self.multilabel else targets.argmax(dim=1)
         return outputs, targets
 
