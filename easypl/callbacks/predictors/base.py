@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from pytorch_lightning.callbacks import Callback
 from typing import List, Dict
 
@@ -22,6 +23,7 @@ class BaseTestTimeAugmentation(Callback):
         self.augmentation_method = augmentation_method
         self.phase = phase
 
+        self.current_n = n
         self.data_keys = None
         self.collate_fns = []
         self.metrics = []
@@ -54,7 +56,7 @@ class BaseTestTimeAugmentation(Callback):
     ):
         def reshape_tensor(tensor):
             return tensor.reshape(
-                self.n + 1, -1, *output.shape[1:]
+                self.current_n + 1, -1, *output.shape[1:]
             )
 
         output = outputs['output']
@@ -85,7 +87,7 @@ class BaseTestTimeAugmentation(Callback):
                 self.metrics[dataloader_idx].reset()
                 for metric_name in metrics:
                     pl_module.formated_log(
-                        f'{prefix}/{metric_name}_tta[n={self.n} method={self.augmentation_method}]',
+                        f'{prefix}_tta[n={self.n} method={self.augmentation_method}]/{metric_name}',
                         metrics[metric_name],
                         on_step=False,
                         on_epoch=True,
@@ -107,6 +109,18 @@ class BaseTestTimeAugmentation(Callback):
     def postprocessing(self, sample: Dict, dataloader_idx: int) -> Dict:
         return sample
 
+    def __augmentation_generator(self):
+        if self.augmentation_method == 'first':
+            self.current_n = min(self.n, len(self.augmentations))
+            return (augmentation for augmentation in self.augmentations[:self.n])
+        elif self.augmentation_method == 'random':
+            augmentations = np.random.choice(self.augmentations, self.n)
+            self.current_n = self.n
+            return (augmentation for augmentation in augmentations)
+        else:
+            self.current_n = len(self.augmentations)
+            return (augmentation for augmentation in self.augmentations)
+
     def __collate_fn(self, dataloader_idx):
         def collate_fn_wrapper(batch):
             # TODO collate_fn_wrapper multiprocessing optimization
@@ -115,7 +129,8 @@ class BaseTestTimeAugmentation(Callback):
                 self.preprocessing(_, dataloader_idx) for _ in batch
             ]
             augmented_samples = []
-            for augmentation in self.augmentations:
+            augmentations = self.__augmentation_generator()
+            for augmentation in augmentations:
                 for sample in samples:
                     augmented_samples.append(self.augment(sample, augmentation))
             samples = samples + augmented_samples
