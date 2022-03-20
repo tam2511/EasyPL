@@ -48,5 +48,5 @@ class MetricsList(Metric):
     def clone(self):
         metric_list = self.__class__()
         for metric in self.cache_metrics:
-            metric_list.add(metric)
+            metric_list.add(metric.clone())
         return metric_list
