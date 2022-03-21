@@ -101,11 +101,14 @@ class BaseLearner(LightningModule):
             slice_by_batch_size(targets, batch['batch_size'], ['loss', 'metric'])
             slice_by_batch_size(outputs, batch['batch_size'], ['loss', 'metric'])
         loss = self.loss_step(outputs['loss'], targets['loss'])
-        self.formated_log(f'{log_prefix}/loss', loss['loss'], on_step=log_on_step, on_epoch=log_on_epoch,
-                          prog_bar=log_prog_bar)
         for key in loss['log']:
-            self.formated_log(f'{log_prefix}/loss_{key}', loss['log'][key], on_step=log_on_step, on_epoch=log_on_epoch,
-                              prog_bar=log_prog_bar)
+            self.formated_log(
+                f'{log_prefix}/loss_{key}' if key != 'loss' else f'{log_prefix}/loss',
+                loss['log'][key],
+                on_step=log_on_step,
+                on_epoch=log_on_epoch,
+                prog_bar=log_prog_bar
+            )
         if phase == 'train':
             self.__log_lr()
         if len(self.metrics[phase]) <= dataloader_idx:
@@ -128,7 +131,8 @@ class BaseLearner(LightningModule):
     def formated_log(self, name: str, obj, on_step: bool = True, on_epoch: bool = False, prog_bar: bool = False):
         if isinstance(obj, dict):
             for key in obj:
-                self.formated_log('_'.join([name, key]), obj[key], on_step=on_step, on_epoch=on_epoch, prog_bar=prog_bar)
+                self.formated_log('_'.join([name, key]), obj[key], on_step=on_step, on_epoch=on_epoch,
+                                  prog_bar=prog_bar)
         elif isinstance(obj, torch.Tensor) or isinstance(obj, Number):
             self.log(name, obj, on_step=on_step, on_epoch=on_epoch, prog_bar=prog_bar)
         else:
