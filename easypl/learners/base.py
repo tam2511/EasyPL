@@ -9,7 +9,7 @@ from torchmetrics import Metric
 from easypl.lr_schedulers import WrapperScheduler
 from easypl.metrics.base import MetricsList
 from easypl.optimizers import WrapperOptimizer
-from easypl.utilities.data import slice_by_batch_size
+from easypl.utilities.data import slice_by_batch_size, to_
 
 
 class BaseLearner(LightningModule):
@@ -116,8 +116,8 @@ class BaseLearner(LightningModule):
         self.metrics[phase][dataloader_idx].update(outputs['metric'], targets['metric'])
         ret = {'loss': loss['loss']}
         if self.return_output_phase[phase]:
-            ret['output'] = outputs['log']
-            ret['target'] = targets['log']
+            ret['output'] = to_(outputs['log'], device='cpu')
+            ret['target'] = to_(targets['log'], device='cpu')
         return ret
 
     def __epoch_end(self, phase='train'):
