@@ -1,6 +1,7 @@
 from typing import Optional, Union, List, Dict
 from numbers import Number
 import warnings
+from itertools import chain
 
 from pytorch_lightning import LightningModule
 import torch
@@ -197,8 +198,12 @@ class BaseLearner(LightningModule):
         else:
             if isinstance(self.model, torch.nn.ModuleList):
                 optimizers = [
-                    self.optimizer(filter(lambda p: p.requires_grad, self.model[idx].parameters()))
-                    for idx in range(len(self.model))
+                    self.optimizer(
+                        chain(*[
+                            filter(lambda p: p.requires_grad, self.model[idx].parameters())
+                            for idx in range(len(self.model))
+                        ])
+                    )
                 ]
             else:
                 optimizers = [
