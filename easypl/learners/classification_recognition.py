@@ -65,8 +65,9 @@ class RecognitionClassificatorLearner(BaseLearner):
 
     def get_outputs(self, batch):
         samples = batch[self.data_keys[0]]
+        targets = batch[self.target_keys[0]]
         embeddings = self.forward(samples)
-        outputs = self.model[1](embeddings)
+        outputs = self.model[1](embeddings, targets)
         return {
             'loss': outputs,
             'metric': embeddings,
