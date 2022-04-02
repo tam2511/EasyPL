@@ -34,7 +34,7 @@ class BaseLearner(LightningModule):
         :param val_metrics:list of val metrics
         """
         super().__init__()
-        self.model = model
+        self.model = torch.nn.ModuleList(model) if isinstance(model, list) else model
         self.loss_f = loss
         self.optimizer = optimizer
         self.lr_scheduler = lr_scheduler
@@ -185,7 +185,7 @@ class BaseLearner(LightningModule):
 
     def configure_optimizers(self):
         if isinstance(self.optimizer, list):
-            if not isinstance(self.model, list):
+            if not isinstance(self.model, torch.nn.ModuleList):
                 raise ValueError('For multiple optimizers need multiple models with same len.')
             elif len(self.model) != len(self.optimizer):
                 raise ValueError('Number of models must be equal number of optimizers')
@@ -195,7 +195,7 @@ class BaseLearner(LightningModule):
                     for idx in range(len(self.model))
                 ]
         else:
-            if isinstance(self.model, list):
+            if isinstance(self.model, torch.nn.ModuleList):
                 optimizers = [
                     self.optimizer(filter(lambda p: p.requires_grad, self.model[idx].parameters()))
                     for idx in range(len(self.model))
