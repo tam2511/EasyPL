@@ -32,7 +32,7 @@ class ClassificatorLearner(BaseLearner):
             data_keys=data_keys,
             target_keys=target_keys
         )
-        if len(data_keys) != 1 and len(target_keys) != 1:
+        if len(data_keys) != 1:
             raise ValueError('"data_keys" and "target_keys" must be one element')
         self.multilabel = multilabel
 
