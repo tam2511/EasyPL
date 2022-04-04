@@ -55,8 +55,8 @@ class BaseLearner(LightningModule):
                 self.metrics['test'][0].add(metric=test_metric)
         self.data_keys = data_keys
         self.target_keys = target_keys
-        if self.data_keys is None or self.target_keys is None:
-            raise ValueError('"data_keys" and "target_keys" can not be None')
+        if self.data_keys is None:
+            raise ValueError('"data_keys" can not be None')
         self.return_output_phase = {
             'train': False,
             'val': False,
