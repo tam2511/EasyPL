@@ -33,7 +33,8 @@ class CSVDatasetClassification(PathBaseDataset):
         self.return_label = return_label
         dt = pd.read_csv(csv_path)
         self.images = dt.values[:, 0] if image_column is None else dt[image_column].values
-        self.targets = dt.values[:, 1:] if target_columns is None else dt[target_columns].values
+        if self.return_label:
+            self.targets = dt.values[:, 1:] if target_columns is None else dt[target_columns].values
 
     def __len__(self):
         return len(self.images)
