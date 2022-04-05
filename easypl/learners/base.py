@@ -196,19 +196,9 @@ class BaseLearner(LightningModule):
                     for idx in range(len(self.model))
                 ]
         else:
-            if isinstance(self.model, torch.nn.ModuleList):
-                optimizers = [
-                    self.optimizer(
-                        chain(*[
-                            filter(lambda p: p.requires_grad, self.model[idx].parameters())
-                            for idx in range(len(self.model))
-                        ])
-                    )
-                ]
-            else:
-                optimizers = [
-                    self.optimizer(filter(lambda p: p.requires_grad, self.model.parameters()))
-                ]
+            optimizers = [
+                self.optimizer(filter(lambda p: p.requires_grad, self.model.parameters()))
+            ]
         if isinstance(self.lr_scheduler, list):
             if len(optimizers) != len(self.lr_scheduler):
                 raise ValueError('Number of lr_schedulers must be equal number of optimizers')
