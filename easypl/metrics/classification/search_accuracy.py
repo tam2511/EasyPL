@@ -49,11 +49,18 @@ class SearchAccuracy(Metric):
             raise ValueError('Distance function is incorrect.')
 
     def __compute(self, embeddings: torch.Tensor, targets: torch.Tensor):
+        targets_counts = {}
+        for target in targets:
+            target = target.item()
+            if target not in targets_counts:
+                targets_counts[target] = 0
+            targets_counts[target] += 1
         k = [self.k] if isinstance(self.k, int) else list(self.k)
         max_k = min(max(k) + 1, embeddings.size(0))
         result = [0.0] * len(k)
         if self.distance_name == 'Normalize cosine':
             embeddings = normalize(embeddings, dim=1)
+        num_corrects = 0
         for idx in range(0, embeddings.size(0), self.batch_size):
             query = embeddings.narrow(0, idx, min(self.batch_size, embeddings.size(0) - idx))
             pairwaise_matrix = self.distance(query, embeddings)
@@ -62,9 +69,14 @@ class SearchAccuracy(Metric):
             predicted_targets = targets[indicies]
             tp = true_targets.unsqueeze(-1).repeat(1, predicted_targets.size(1)) == predicted_targets
             tp[:, 0] = False
+            good_idxs = torch.tensor([target for target in true_targets if targets_counts[target.item()] > 1])
+            if len(good_idxs) == 0:
+                continue
+            num_corrects += len(good_idxs)
+            tp = tp[good_idxs]
             for k_idx in range(len(k)):
                 result[k_idx] += tp.narrow(1, 0, min(k[k_idx] + 1, tp.size(1))).any(dim=1).sum()
-        result = torch.tensor(result) / embeddings.size(0)
+        result = torch.tensor(result) / num_corrects
         return {
             '{}_top{}'.format(self.name, k[k_idx]): result[[k_idx]] for k_idx in range(len(k))
         }
