@@ -69,7 +69,8 @@ class SearchAccuracy(Metric):
             predicted_targets = targets[indicies]
             tp = true_targets.unsqueeze(-1).repeat(1, predicted_targets.size(1)) == predicted_targets
             tp[:, 0] = False
-            good_idxs = torch.tensor([target for target in true_targets if targets_counts[target.item()] > 1])
+            good_idxs = torch.tensor(
+                [i for i in range(len(true_targets)) if targets_counts[true_targets[i].item()] > 1])
             if len(good_idxs) == 0:
                 continue
             num_corrects += len(good_idxs)
