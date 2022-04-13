@@ -7,9 +7,9 @@ from torch.nn.functional import normalize
 from easypl.metrics.utils import build_distance, available_distances
 
 
-class SearchAccuracy(Metric):
+class SearchMAP(Metric):
     """
-    Version of accuracy for search case
+    Version of mean average precision for search case
     """
 
     def __init__(
@@ -22,7 +22,7 @@ class SearchAccuracy(Metric):
             compute_on_step: bool = True
     ):
         """
-        :param k: SearchAccuracy return top k (top (k[0], k[1], ...) if k is list) accuracy rate
+        :param k: SearchMAP return top k (top (k[0], k[1], ...) if k is list) accuracy rate
         :param batch_size: batch size for evaluate distance operations
         :param distance: name or function of distance
         :param largest: if True metric evaluate top largest samples, else evaluate smallest samples
@@ -85,9 +85,11 @@ class SearchAccuracy(Metric):
             if len(good_idxs) == 0:
                 continue
             num_corrects += len(good_idxs)
-            tp = tp[good_idxs]
+            tp = tp[good_idxs].to(dtype=torch.float32)
+            for sub_idx in range(max_k):
+                tp[:, sub_idx] /= (1 + sub_idx)
             for k_idx in range(len(k)):
-                result[k_idx] += tp.narrow(1, 0, min(k[k_idx] + 1, tp.size(1))).sum()
+                result[k_idx] += tp.narrow(1, 0, min(k[k_idx], tp.size(1))).sum()
         result = torch.tensor(result) / num_corrects
         return {
             '{}_top{}'.format(self.name, k[k_idx]): result[[k_idx]] for k_idx in range(len(k))
