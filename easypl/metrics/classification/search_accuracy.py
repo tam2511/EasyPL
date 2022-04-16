@@ -75,8 +75,8 @@ class SearchAccuracy(Metric):
             ).to(pairwaise_matrix.device)
             pairwaise_matrix[:len(corrector), :len(corrector)] += corrector * (1 - 2 * self.largest)
             _, indicies = torch.sort(pairwaise_matrix, dim=1, descending=self.largest)
-            true_targets = targets.narrow(0, idx, min(self.batch_size, embeddings.size(0) - idx))
-            predicted_targets = targets[indicies]
+            true_targets = targets.narrow(0, idx, min(self.batch_size, embeddings.size(0) - idx)).cpu()
+            predicted_targets = targets[indicies].cpu()
             predicted_targets = torch.from_numpy(np.apply_along_axis(row_unique, axis=1, arr=predicted_targets))[:,
                                 :max_k]
             tp = true_targets.unsqueeze(-1).repeat(1, predicted_targets.size(1)) == predicted_targets
