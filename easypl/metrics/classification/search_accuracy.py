@@ -51,7 +51,8 @@ class SearchAccuracy(Metric):
 
     def __compute(self, embeddings: torch.Tensor, targets: torch.Tensor):
         def row_unique(row):
-            return torch.unique(torch.from_numpy(row), sorted=False)
+            idxs = sorted(np.unique(row, return_index=True)[1])
+            return torch.from_numpy(row[idxs])
 
         targets_counts = {}
         for target in targets:
@@ -87,7 +88,7 @@ class SearchAccuracy(Metric):
             num_corrects += len(good_idxs)
             tp = tp[good_idxs]
             for k_idx in range(len(k)):
-                result[k_idx] += tp.narrow(1, 0, min(k[k_idx] + 1, tp.size(1))).sum()
+                result[k_idx] += tp.narrow(1, 0, min(k[k_idx], tp.size(1))).sum()
         result = torch.tensor(result) / num_corrects
         return {
             '{}_top{}'.format(self.name, k[k_idx]): result[[k_idx]] for k_idx in range(len(k))

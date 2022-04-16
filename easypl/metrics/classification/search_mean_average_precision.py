@@ -51,7 +51,8 @@ class SearchMAP(Metric):
 
     def __compute(self, embeddings: torch.Tensor, targets: torch.Tensor):
         def row_unique(row):
-            return torch.unique(torch.from_numpy(row), sorted=False)
+            idxs = sorted(np.unique(row, return_index=True)[1])
+            return torch.from_numpy(row[idxs])
 
         targets_counts = {}
         for target in targets:
