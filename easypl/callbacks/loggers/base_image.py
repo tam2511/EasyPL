@@ -1,19 +1,61 @@
+from typing import Optional, List, Callable
+
+import pytorch_lightning
+
 from easypl.utilities.transforms import inv_transform
 from easypl.callbacks.loggers.base import BaseSampleLogger
 
 
 class BaseImageLogger(BaseSampleLogger):
+    """
+
+    Abstract callback class for logging images
+
+    Attributes
+    ----------
+    phase: str
+        Phase which will be used by this Logger.
+        Available: ["train", "val", "test", "predict"].
+
+    max_samples: int
+        Maximum number of samples which will be logged at one epoch.
+
+    class_names: Optional[List]
+        List of class names for pretty logging.
+        If None, then class_names will set range of number of classes.
+
+    mode: str
+        Mode of sample generation.
+        Available modes: ["random", "first", "top"].
+
+    sample_key: Optional
+        Key of batch, which define sample.
+        If None, then sample_key will parse `learner.data_keys`.
+
+    score_func: Optional[Callable]
+        Function for score evaluation. Necessary if "mode" = "top".
+
+    largest: bool
+        Sorting order for "top" mode
+
+    dir_path: Optional[str]
+        If defined, then logs will be writed in this directory. Else in lighting_logs.
+
+    save_on_disk: bool
+        If true, then logs will be writed on disk to "dir_path".
+
+    """
     def __init__(
             self,
-            phase='train',
-            max_samples=1,
-            class_names=None,
-            mode='first',
-            sample_key=None,
-            score_func=None,
-            largest=True,
-            dir_path=None,
-            save_on_disk=False
+            phase: str = 'train',
+            max_samples: int = 1,
+            class_names: Optional[List] = None,
+            mode: str = 'first',
+            sample_key: Optional = None,
+            score_func: Optional[Callable] = None,
+            largest: bool = True,
+            dir_path: Optional[str] = None,
+            save_on_disk: bool = False
     ):
         super().__init__(
             phase=phase,
@@ -43,5 +85,21 @@ class BaseImageLogger(BaseSampleLogger):
                 )
             )
 
-    def _post_init(self, trainer, pl_module):
+    def _post_init(
+            self,
+            trainer: pytorch_lightning.Trainer,
+            pl_module: pytorch_lightning.LightningModule
+    ):
+        """
+        Method for initialization inverse transforms.
+
+        Attributes
+        ----------
+        trainer: pytorch_lightning.Trainer
+            Trainer of pytorch-lightning
+
+        pl_module: pytorch_lightning.LightningModule
+            LightningModule of pytorch-lightning
+
+        """
         self.__init_transform(trainer)

@@ -1,17 +1,49 @@
 from pytorch_lightning.callbacks import BaseFinetuning
+from typing import Dict
 
 
 class SequentialFinetuning(BaseFinetuning):
-    """Callback for sequence unfreezing model"""
+    """
+    Callback for sequence unfreezing model
+
+    Attributes
+    ----------
+    sequence: Dict
+        Dict of dicts with unfreezing information for epochs.
+        Dict must be like:
+        `{ "epoch_num": EPOCH_INFO, ... }`
+            EPOCH_INFO: Dict
+                layers: List
+                    List of layers names, which will be able to unfreeze
+                lr_gamma: float
+                    Multiple gamma for previous param group learning rate
+
+
+
+    Examples
+    ----------
+        >>> from easypl.callbacks import SequentialFinetuning
+        ... sequence = {
+        ...     '0': {
+        ...        'layers': ['block1.layer_name1', ...]
+        ...        },
+        ...     ...
+        ...     '12': {
+        ...         'layers': ['block12.layer_name13', ...]
+        ...         },
+        ...     '14': {
+        ...         'layers': ['block14.layer_name3', ...],
+        ...         'lr_gamma': 0.1
+        ...         }
+        ... }
+        ... finetuner = SequentialFinetuning(sequence=sequence)
+
+    """
 
     def __init__(
             self,
-            sequence: dict
+            sequence: Dict
     ):
-        """
-        :param sequence: dict of dicts. example: {0: {'layers': ['block1.layer_name1', ...]}, ...,
-         12: {'layers: ['block12.layer_name13', ...]}, 14: {'layers: ['block14.layer_name3', ...], 'lr_gamma': 0.1}}
-        """
         super().__init__()
         self.sequence = sequence
 

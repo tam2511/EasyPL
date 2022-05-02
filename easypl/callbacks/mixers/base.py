@@ -1,4 +1,4 @@
-from typing import Union, List
+from typing import Union, List, Dict
 
 from pytorch_lightning.callbacks import Callback
 import numpy as np
@@ -9,7 +9,23 @@ from easypl.utilities.data import to_
 
 
 class MixBaseCallback(Callback):
-    """Abstract callback for mixing data operations"""
+    """
+    Abstract callback for mixing data operations
+
+    Attributes
+    ----------
+    on_batch: bool
+        If True generate samples from batch otherwise from dataset.
+
+    samples_per: Union[int, List[int]]
+        Number generating samples for one sample.
+
+    p: float
+        Mix probability.
+
+    num_workers: int
+        Number of workers for mixing operation.
+    """
 
     def __init__(
             self,
@@ -18,12 +34,6 @@ class MixBaseCallback(Callback):
             p: float = 0.5,
             num_workers: int = 1
     ):
-        '''
-        :param on_batch: if True generate samples from batch otherwise from dataset
-        :param samples_per: number generating samples for one sample
-        :param p: mix probability
-        :param num_workers: number of workers for mixing operation
-        '''
         super().__init__()
         self.on_batch = on_batch
         self.samples_per = samples_per
@@ -64,7 +74,27 @@ class MixBaseCallback(Callback):
         batch_size = Counter([len(batch[key]) for key in batch]).most_common(1)[0][0]
         return batch_size
 
-    def mix(self, sample1: dict, sample2: dict) -> dict:
+    def mix(
+            self,
+            sample1: Dict,
+            sample2: Dict
+    ) -> Dict:
+        """
+        Abstract method for mix operation of two samples. `sample2` can be list of samples.
+
+        Attributes
+        ----------
+        sample1: Dict
+            Sample of batch, which will be sampled with sample/samples from `sample2`.
+
+        sample2: Dict
+            Sample/samples from batch or dataset.
+
+        Returns
+        -------
+        Dict
+            Mixed sample.
+        """
         raise NotImplementedError
 
     def on_train_batch_start(self, trainer, pl_module, batch, batch_idx, dataloader_idx):

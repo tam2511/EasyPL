@@ -1,5 +1,5 @@
 import warnings
-from typing import Dict
+from typing import Dict, Optional, Callable, List
 import numpy as np
 import torch
 from torch.nn.functional import one_hot
@@ -15,19 +15,64 @@ from easypl.callbacks.loggers.base_image import BaseImageLogger
 
 
 class ClassificationImageLogger(BaseImageLogger):
+    """
+
+    Callback class for logging images in classification task
+
+    Attributes
+    ----------
+    phase: str
+        Phase which will be used by this Logger.
+        Available: ["train", "val", "test", "predict"].
+
+    max_samples: int
+        Maximum number of samples which will be logged at one epoch.
+
+    class_names: Optional[List]
+        List of class names for pretty logging.
+        If None, then class_names will set range of number of classes.
+
+    num_classes: Optional[int]
+        Number of classes. Necessary if `class_names` is None.
+
+    max_log_classes: Optional[int]
+        Max of number classes, which will be logged in one sample.
+
+    mode: str
+        Mode of sample generation.
+        Available modes: ["random", "first", "top"].
+
+    sample_key: Optional
+        Key of batch, which define sample.
+        If None, then sample_key will parse `learner.data_keys`.
+
+    score_func: Optional[Callable]
+        Function for score evaluation. Necessary if "mode" = "top".
+
+    largest: bool
+        Sorting order for "top" mode
+
+    dir_path: Optional[str]
+        If defined, then logs will be writed in this directory. Else in lighting_logs.
+
+    save_on_disk: bool
+        If true, then logs will be writed on disk to "dir_path".
+
+    """
+
     def __init__(
             self,
-            phase='train',
-            max_samples=1,
-            class_names=None,
-            num_classes=None,
-            max_log_classes=None,
-            mode='first',
-            sample_key=None,
-            score_func=None,
-            largest=True,
-            dir_path=None,
-            save_on_disk=False,
+            phase: str = 'train',
+            max_samples: int = 1,
+            class_names: Optional[List] = None,
+            num_classes: Optional[int] = None,
+            max_log_classes: Optional[int] = None,
+            mode: str = 'first',
+            sample_key: Optional = None,
+            score_func: Optional[Callable] = None,
+            largest: bool = True,
+            dir_path: Optional[str] = None,
+            save_on_disk: bool = False
     ):
         super().__init__(
             phase=phase,
@@ -52,7 +97,36 @@ class ClassificationImageLogger(BaseImageLogger):
 
         self.pad = 20
 
-    def get_log(self, sample, output, target, dataloader_idx=0) -> Dict:
+    def get_log(
+        self,
+        sample: np.ndarray,
+        output: torch.Tensor,
+        target: torch.Tensor,
+        dataloader_idx: int = 0
+    ) -> Dict:
+        """
+        Method for preparing data for image classification logging
+
+        Attributes
+        ----------
+        sample: np.ndarray
+            Image in numpy ndarray format.
+
+        output: torch.Tensor
+            Output of model in Tensor format.
+
+        target: torch.Tensor
+            Target of record of dataset in Tensor format.
+
+        dataloader_idx: int, default: 0
+            Index of dataloader.
+
+        Returns
+        -------
+        Dict
+            Dict with `image`, `preds` and `targets` keys.
+
+        """
         image = self.inv_transform[dataloader_idx](image=sample)['image'].astype('uint8')
         if not isinstance(output, torch.Tensor):
             raise ValueError('Output must be torch.Tensor type.')
@@ -74,11 +148,45 @@ class ClassificationImageLogger(BaseImageLogger):
             'targets': targets
         }
 
-    def _log_wandb(self, samples: list, dataloader_idx: int):
+    def _log_wandb(
+            self,
+            samples: List,
+            dataloader_idx: int = 0
+    ):
+        """
+
+        Method for wandb logging.
+
+        Attributes
+        ----------
+        samples: List
+            List of returns from `get_log`.
+
+        dataloader_idx: int, default: 0
+            Index of dataloader.
+
+        """
         images = [self.__add_table(sample['image'], sample['preds'], sample['targets']) for sample in samples]
         self.logger.log_image(key=f'{self.tag}_dataloader {dataloader_idx}', images=images)
 
-    def _log_tensorboard(self, samples: list, dataloader_idx: int):
+    def _log_tensorboard(
+            self,
+            samples: List,
+            dataloader_idx: int = 0
+    ):
+        """
+
+        Method for tensorboard logging.
+
+        Attributes
+        ----------
+        samples: List
+            List of returns from `get_log`.
+
+        dataloader_idx: int, default: 0
+            Index of dataloader.
+
+        """
         warnings.warn(f'TensorboardLogger does not supported. Images will save on disk', Warning, stacklevel=2)
         self.save_on_disk = True
 
@@ -114,7 +222,24 @@ class ClassificationImageLogger(BaseImageLogger):
         result = cv2.rectangle(result, (x_image, self.pad), (x_image + image_w, image_h + self.pad), (0, 0, 0), 2)
         return result
 
-    def _log_on_disk(self, samples: list, dataloader_idx: int):
+    def _log_on_disk(
+            self,
+            samples: List,
+            dataloader_idx: int = 0
+    ):
+        """
+
+        Method for logging on disk.
+
+        Attributes
+        ----------
+        samples: List
+            List of returns from `get_log`.
+
+        dataloader_idx: int, default: 0
+            Index of dataloader.
+
+        """
         for i in range(len(samples)):
             result_image = self.__add_table(samples[i]['image'], samples[i]['preds'], samples[i]['targets'])
             dest_dir = os.path.join(self.dir_path, f'epoch_{self.epoch}', self.phase)

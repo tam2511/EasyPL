@@ -1,3 +1,5 @@
+from typing import Dict
+
 import numpy as np
 import torch
 from easypl.callbacks.mixers.base import MixBaseCallback
@@ -6,7 +8,26 @@ AVAILABLE_DOMENS = ['classification', 'detection', 'segmentation']
 
 
 class Cutmix(MixBaseCallback):
-    """Callback for cutmixing"""
+    """
+    Callback for cutmixing data operations
+
+    Attributes
+    ----------
+    on_batch: bool
+        If True generate samples from batch otherwise from dataset.
+
+    p: float
+        Mix probability.
+
+    num_workers: int
+        Number of workers for mixing operation.
+
+    alpha: float
+        Parameter of cutmix operation.
+
+    domen: str
+        Name of task, in which will be mixed samples. Available: ["classification, segmentation"].
+    """
 
     def __init__(
             self,
@@ -16,13 +37,6 @@ class Cutmix(MixBaseCallback):
             p: float = 0.5,
             domen: str = 'classification'
     ):
-        """
-        :param on_batch: if True generate samples from batch else from dataset
-        :param alpha: param for mixup operation
-        :param num_workers: param for mixup operation
-        :param p: mix probability
-        :param domen: task name
-        """
         super().__init__(on_batch=on_batch, samples_per=1, num_workers=num_workers, p=p)
         self.alpha = alpha
         if domen not in AVAILABLE_DOMENS:
@@ -66,7 +80,27 @@ class Cutmix(MixBaseCallback):
             mix_sample[target_key][:, y1:y2, x1:x2] = sample2[target_key][:, y1:y2, x1:x2]
         return mix_sample
 
-    def mix(self, sample1: dict, sample2: dict) -> dict:
+    def mix(
+            self,
+            sample1: Dict,
+            sample2: Dict
+    ) -> Dict:
+        """
+        Cutmix method for two samples.
+
+        Attributes
+        ----------
+        sample1: Dict
+            Sample of batch, which will be sampled with sample from `sample2`.
+
+        sample2: Dict
+            Sample from batch or dataset.
+
+        Returns
+        -------
+        Dict
+            Mixed sample.
+        """
         if len(self.data_keys) != 1:
             raise NotImplementedError('Data keys must have len equal 1')
         sample2 = {key: sample2[key][0] for key in sample2}

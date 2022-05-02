@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Union, List
+from typing import Union, List, Dict
 import torch
 from easypl.callbacks.mixers.base import MixBaseCallback
 from easypl.utilities.data import grids
@@ -9,7 +9,26 @@ AVAILABLE_DOMENS = ['classification', 'detection', 'segmentation']
 
 
 class Mosaic(MixBaseCallback):
-    """Callback for mosaic mixing"""
+    """
+    Callback for mosaic data operations
+
+    Attributes
+    ----------
+    on_batch: bool
+        If True generate samples from batch otherwise from dataset.
+
+    p: float
+        Mix probability.
+
+    num_workers: int
+        Number of workers for mixing operation.
+
+    n_mosaics: Union[int, List[int]]
+        Number of mosaics. If it's list, then number of mosaic will be selected from this list.
+
+    domen: str
+        Name of task, in which will be mixed samples. Available: ["classification, segmentation"].
+    """
 
     def __init__(
             self,
@@ -19,13 +38,6 @@ class Mosaic(MixBaseCallback):
             p: float = 0.5,
             domen: str = 'classification'
     ):
-        """
-        :param on_batch: if True generate samples from batch else from dataset
-        :param n_mosaics: number of images in mosaic grid
-        :param num_workers: param for mixup operation
-        :param p: mix probability
-        :param domen: task name
-        """
         n_mosaics = [_ - 1 for _ in n_mosaics] if isinstance(n_mosaics, list) else n_mosaics - 1
         super().__init__(on_batch=on_batch, samples_per=n_mosaics, num_workers=num_workers, p=p)
         if domen not in AVAILABLE_DOMENS:
@@ -83,7 +95,27 @@ class Mosaic(MixBaseCallback):
                 mix_sample[target_key][:, g_y1:g_y2, g_x1:g_x2] = samples[target_key][sample_idx][:, y1:y2, x1:x2]
         return mix_sample
 
-    def mix(self, sample1: dict, sample2: dict) -> dict:
+    def mix(
+            self,
+            sample1: Dict,
+            sample2: Dict
+    ) -> Dict:
+        """
+        Mosaic mix method for two samples.
+
+        Attributes
+        ----------
+        sample1: Dict
+            Sample of batch, which will be sampled with samples from `sample2`.
+
+        sample2: Dict
+            Samples from batch or dataset.
+
+        Returns
+        -------
+        Dict
+            Mixed sample.
+        """
         if len(self.data_keys) != 1:
             raise NotImplementedError('Data keys must have len equal 1')
         if self.domen == 'classification':

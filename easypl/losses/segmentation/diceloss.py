@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -63,18 +65,32 @@ class BinaryDiceLoss(nn.Module):
 
 
 class DiceLoss(nn.Module):
-    """Dice loss, need one hot encode input
-    Args:
-        weight: An array of shape [num_classes,]
-        ignore_index: class index to ignore
-        predict: A tensor of shape [N, C, *]
-        target: A tensor of same shape with predict
-        other args pass to BinaryDiceLoss
-    Return:
-        same as BinaryDiceLoss
+    """
+    Dice loss, need one hot encode input. Taken from: `https://github.com/hubutui/DiceLoss-PyTorch/blob/master/loss.py`.
+    Inputs must be a tensor of shape [N, C, *].
+
+    Attributes
+    ----------
+    weight: Optional[torch.Tensor]
+        An array of shape [num_classes,].
+
+    ignore_index: Optional[int]
+        Class index to ignore.
+
+    kwargs:
+        Additional arguments.
+    Returns
+    ----------
+    torch.Tensor
+        Loss value
     """
 
-    def __init__(self, weight=None, ignore_index=None, **kwargs):
+    def __init__(
+            self,
+            weight: Optional[torch.Tensor] = None,
+            ignore_index: Optional[int] = None,
+            **kwargs
+    ):
         super(DiceLoss, self).__init__()
         self.kwargs = kwargs
         self.weight = weight

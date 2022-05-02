@@ -1,4 +1,4 @@
-from typing import Optional, Union, List, Dict
+from typing import Optional, Union, List, Dict, Any
 from numbers import Number
 import warnings
 from itertools import chain
@@ -14,6 +14,38 @@ from easypl.utilities.data import slice_by_batch_size, to_
 
 
 class BaseLearner(LightningModule):
+    """
+    Abstract base learner
+
+    Attributes
+    ----------
+    model: Optional[Union[torch.nn.Module, List[torch.nn.Module]]]
+        torch.nn.Module model.
+
+    loss: Optional[Union[torch.nn.Module, List[torch.nn.Module]]]
+        torch.nn.Module loss function.
+
+    optimizer: Optional[Union[WrapperOptimizer, List[WrapperOptimizer]]]
+        Optimizer wrapper object.
+
+    lr_scheduler: Optional[Union[WrapperScheduler, List[WrapperScheduler]]]
+        Scheduler object for lr scheduling.
+
+    train_metrics: Optional[List[Metric]]
+        List of train metrics.
+
+    val_metrics: Optional[List[Metric]]
+        List of validation metrics.
+
+    test_metrics: Optional[List[Metric]]
+        List of test metrics.
+
+    data_keys: Optional[List[str]]
+        List of data keys
+
+    target_keys: Optional[List[str]]
+        List of target keys
+    """
     def __init__(
             self,
             model: Optional[Union[torch.nn.Module, List[torch.nn.Module]]] = None,
@@ -26,14 +58,6 @@ class BaseLearner(LightningModule):
             data_keys: Optional[List[str]] = None,
             target_keys: Optional[List[str]] = None
     ):
-        """
-        :param model: torch.nn.Module model
-        :param loss: torch.nn.Module loss function
-        :param optimizer: Optimizer wrapper object
-        :param lr_scheduler: Scheduler object for lr scheduling
-        :param train_metrics: list of train metrics
-        :param val_metrics:list of val metrics
-        """
         super().__init__()
         self.model = torch.nn.ModuleList(model) if isinstance(model, list) else model
         self.loss_f = loss
@@ -64,32 +88,64 @@ class BaseLearner(LightningModule):
             'predict': False,
         }
 
-    def loss_step(self, outputs, targets) -> Dict:
+    def loss_step(
+            self,
+            outputs: Any,
+            targets: Any
+    ) -> Dict:
         """
-        @return: {
-            'loss': torch.Tensor,
-            'log': {...},
-        }
+        Abstract method fow loss evaluating.
+
+        Attributes
+        ----------
+        outputs: Any
+            Any outputs from model
+
+        targets: Any
+            Any targets from batch
+
+        Returns
+        ----------
+        Dict
+            Dict with keys: ["loss", "log"]
         """
         raise NotImplementedError
 
-    def get_targets(self, batch) -> Dict:
+    def get_targets(
+            self,
+            batch: Dict
+    ) -> Dict:
         """
-        @return: {
-            'loss': ...,
-            'metric': ...,
-            'log': ...,
-        }
+        Abtract method for selecting and preprocessing targets from batch
+
+        Attributes
+        ----------
+        batch: Dict
+            Batch in step
+
+        Returns
+        ----------
+        Dict
+            Dict with keys: ["loss", "metric", "log"]
         """
         raise NotImplementedError
 
-    def get_outputs(self, batch):
+    def get_outputs(
+            self,
+            batch: Dict
+    ) -> Dict:
         """
-        @return: {
-            'loss': ...,
-            'metric': ...,
-            'log': ...,
-        }
+        Abtract method for selecting and preprocessing outputs from batch
+
+        Attributes
+        ----------
+        batch: Dict
+            Batch in step
+
+        Returns
+        ----------
+        Dict
+            Dict with keys: ["loss", "metric", "log"]
         """
         raise NotImplementedError
 

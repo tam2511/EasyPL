@@ -1,5 +1,5 @@
 from torchmetrics import Metric
-from typing import Union, Callable
+from typing import Union, Callable, List
 import torch
 import numpy as np
 from torch.nn.functional import normalize
@@ -10,23 +10,29 @@ from easypl.metrics.utils import build_distance, available_distances
 class SearchAccuracy(Metric):
     """
     Version of accuracy for search case
+
+    Attributes
+    ----------------
+    k: Union[int, List]
+        SearchAccuracy return top k (top (k[0], k[1], ...) if k is list) accuracy rate.
+    batch_size: int
+        Batch size for evaluate distance operations.
+    distance: Union[str, Callable]
+        Name or function of distance.
+    largest: bool
+        If True metric evaluate top largest samples, else evaluate smallest samples.
+
     """
 
     def __init__(
             self,
-            k: Union[int, list] = 1,
+            k: Union[int, List] = 1,
             batch_size: int = 512,
             distance: Union[str, Callable] = 'L2',
             largest: bool = True,
             dist_sync_on_step: bool = False,
             compute_on_step: bool = True
     ):
-        """
-        :param k: SearchAccuracy return top k (top (k[0], k[1], ...) if k is list) accuracy rate
-        :param batch_size: batch size for evaluate distance operations
-        :param distance: name or function of distance
-        :param largest: if True metric evaluate top largest samples, else evaluate smallest samples
-        """
         super().__init__(dist_sync_on_step=dist_sync_on_step, compute_on_step=compute_on_step)
         self.k = k
         self.batch_size = batch_size

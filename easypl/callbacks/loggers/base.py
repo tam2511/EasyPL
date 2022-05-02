@@ -1,7 +1,8 @@
 import os
 import warnings
-from typing import List, Dict
+from typing import List, Dict, Optional, Callable, Any
 
+import pytorch_lightning
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.supporters import CombinedLoader
 from pytorch_lightning.loggers import *
@@ -10,17 +11,56 @@ from easypl.callbacks.loggers.collector import ImageCollector
 
 
 class BaseSampleLogger(Callback):
+    """
+
+    Abstract callback class for logging any objects
+
+    Attributes
+    ----------
+    phase: str
+        Phase which will be used by this Logger.
+        Available: ["train", "val", "test", "predict"].
+
+    max_samples: int
+        Maximum number of samples which will be logged at one epoch.
+
+    class_names: Optional[List]
+        List of class names for pretty logging.
+        If None, then class_names will set range of number of classes.
+
+    mode: str
+        Mode of sample generation.
+        Available modes: ["random", "first", "top"].
+
+    sample_key: Optional
+        Key of batch, which define sample.
+        If None, then sample_key will parse `learner.data_keys`.
+
+    score_func: Optional[Callable]
+        Function for score evaluation. Necessary if "mode" = "top".
+
+    largest: bool
+        Sorting order for "top" mode
+
+    dir_path: Optional[str]
+        If defined, then logs will be writed in this directory. Else in lighting_logs.
+
+    save_on_disk: bool
+        If true, then logs will be writed on disk to "dir_path".
+
+    """
+
     def __init__(
             self,
-            phase='train',
-            max_samples=1,
-            class_names=None,
-            mode='first',
-            sample_key=None,
-            score_func=None,
-            largest=True,
-            dir_path=None,
-            save_on_disk=False
+            phase: str = 'train',
+            max_samples: int = 1,
+            class_names: Optional[List] = None,
+            mode: str = 'first',
+            sample_key: Optional = None,
+            score_func: Optional[Callable] = None,
+            largest: bool = True,
+            dir_path: Optional[str] = None,
+            save_on_disk: bool = False
     ):
         super().__init__()
         self.phase = phase
@@ -85,16 +125,96 @@ class BaseSampleLogger(Callback):
             self.dir_path = os.path.join(root, 'version_{}'.format(last_version), 'images')
         os.makedirs(self.dir_path, exist_ok=True)
 
-    def get_log(self, sample, output, target, dataloader_idx=0) -> Dict:
+    def get_log(
+            self,
+            sample: Any,
+            output: Any,
+            target: Any,
+            dataloader_idx: int = 0
+    ) -> Dict:
+        """
+        Abstract method for preparing data for logging
+
+        Attributes
+        ----------
+        sample: Any
+            Any object, which represent one record of dataset. For example: image, text, dict, ....
+
+        output: Any
+            Output of model.
+
+        target: Any
+            Target of record of dataset.
+
+        dataloader_idx: int, default: 0
+            Index of dataloader.
+
+        Returns
+        -------
+        Dict
+            Any dict, which will be used in logging
+
+        """
         raise NotImplementedError
 
-    def _log_wandb(self, samples: list, dataloader_idx: int):
+    def _log_wandb(
+            self,
+            samples: List,
+            dataloader_idx: int = 0
+    ):
+        """
+
+        Abstract method for wandb logging.
+
+        Attributes
+        ----------
+        samples: List
+            List of returns from `get_log`.
+
+        dataloader_idx: int, default: 0
+            Index of dataloader.
+
+        """
         raise NotImplementedError
 
-    def _log_tensorboard(self, samples: list, dataloader_idx: int):
+    def _log_tensorboard(
+            self,
+            samples: List,
+            dataloader_idx: int = 0
+    ):
+        """
+
+        Abstract method for tensorboard logging.
+
+        Attributes
+        ----------
+        samples: List
+            List of returns from `get_log`.
+
+        dataloader_idx: int, default: 0
+            Index of dataloader.
+
+        """
         raise NotImplementedError
 
-    def _log_on_disk(self, samples: list, dataloader_idx: int):
+    def _log_on_disk(
+            self,
+            samples: List,
+            dataloader_idx: int = 0
+    ):
+        """
+
+        Abstract method for logging on disk.
+
+        Attributes
+        ----------
+        samples: List
+            List of returns from `get_log`.
+
+        dataloader_idx: int, default: 0
+            Index of dataloader.
+
+        """
         raise NotImplementedError
 
     def __log(self, samples: List, dataloader_idx: int = 0):
@@ -134,7 +254,23 @@ class BaseSampleLogger(Callback):
             self.__init_collectors(trainer)
         self.data_keys = pl_module.data_keys
 
-    def _post_init(self, trainer, pl_module):
+    def _post_init(
+            self,
+            trainer: pytorch_lightning.Trainer,
+            pl_module: pytorch_lightning.LightningModule
+    ):
+        """
+        Abstract method for initialization in first batch handling.
+
+        Attributes
+        ----------
+        trainer: pytorch_lightning.Trainer
+            Trainer of pytorch-lightning
+
+        pl_module: pytorch_lightning.LightningModule
+            LightningModule of pytorch-lightning
+
+        """
         raise NotImplementedError
 
     def __on_batch_end(

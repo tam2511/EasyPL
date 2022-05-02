@@ -4,17 +4,32 @@ from torch.nn.functional import one_hot
 
 
 class PixelLevelBase(Metric):
+    """
+    Abstract class for pixel-level segmentation metrics.
+
+    Attributes
+    -------------
+    average: str
+        Method of averaging.
+
+    num_classes: int
+        Number of classes.
+
+    threshold: float
+        Threshold for probabilities of pixels.
+    """
+
     def __init__(
             self,
-            average='macro',
-            num_classes=0,
-            threshold=0.5
+            average: str = 'macro',
+            num_classes: int = 0,
+            threshold: float = 0.5
     ):
         super().__init__()
         self.threshold = threshold
         self.average = average
         self.num_classes = num_classes
-        if num_classes is None or num_classes < 1:
+        if num_classes < 1:
             raise ValueError('You must passing number of classes')
         if average not in ['macro', 'none']:
             raise ValueError('Available average values: macro, none')
@@ -57,7 +72,27 @@ class PixelLevelBase(Metric):
 
 
 class PixelLevelAccuracy(PixelLevelBase):
-    def __init__(self, average='macro', threshold=0.5, num_classes=None):
+    """
+        Pixel-level accuracy segmentation metric.
+
+        Attributes
+        -------------
+        average: str
+            Method of averaging.
+
+        num_classes: int
+            Number of classes.
+
+        threshold: float
+            Threshold for probabilities of pixels.
+        """
+
+    def __init__(
+            self,
+            average: str = 'macro',
+            num_classes: int = 0,
+            threshold: float = 0.5
+    ):
         super().__init__(average=average, threshold=threshold, num_classes=num_classes)
 
     def reduce(self, tp: torch.Tensor, tn: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor):
@@ -65,7 +100,31 @@ class PixelLevelAccuracy(PixelLevelBase):
 
 
 class PixelLevelRecall(PixelLevelBase):
-    def __init__(self, average='macro', threshold=0.5, num_classes=None, epsilon=1e-8):
+    """
+    Pixel-level recall segmentation metric.
+
+    Attributes
+    -------------
+    average: str
+        Method of averaging.
+
+    num_classes: int
+        Number of classes.
+
+    threshold: float
+        Threshold for probabilities of pixels.
+
+    epsilon: float
+        Epsilon for correct evalating metric.
+    """
+
+    def __init__(
+            self,
+            average: str = 'macro',
+            num_classes: int = 0,
+            threshold: float = 0.5,
+            epsilon: float = 1e-8
+    ):
         super().__init__(average=average, threshold=threshold, num_classes=num_classes)
         self.epsilon = epsilon
 
@@ -74,7 +133,31 @@ class PixelLevelRecall(PixelLevelBase):
 
 
 class PixelLevelPrecision(PixelLevelBase):
-    def __init__(self, average='macro', threshold=0.5, num_classes=None, epsilon=1e-8):
+    """
+    Pixel-level precision segmentation metric.
+
+    Attributes
+    -------------
+    average: str
+        Method of averaging.
+
+    num_classes: int
+        Number of classes.
+
+    threshold: float
+        Threshold for probabilities of pixels.
+
+    epsilon: float
+        Epsilon for correct evalating metric.
+    """
+
+    def __init__(
+            self,
+            average: str = 'macro',
+            num_classes: int = 0,
+            threshold: float = 0.5,
+            epsilon: float = 1e-8
+    ):
         super().__init__(average=average, threshold=threshold, num_classes=num_classes)
         self.epsilon = epsilon
 
@@ -83,7 +166,35 @@ class PixelLevelPrecision(PixelLevelBase):
 
 
 class PixelLevelFBeta(PixelLevelBase):
-    def __init__(self, average='macro', threshold=0.5, num_classes=None, beta=1.0, epsilon=1e-8):
+    """
+    Pixel-level f-beta segmentation metric.
+
+    Attributes
+    -------------
+    average: str
+        Method of averaging.
+
+    num_classes: int
+        Number of classes.
+
+    threshold: float
+        Threshold for probabilities of pixels.
+
+    beta: float
+        Param of metric F-beta
+
+    epsilon: float
+        Epsilon for correct evalating metric.
+    """
+
+    def __init__(
+            self,
+            average: str = 'macro',
+            num_classes: int = 0,
+            threshold: float = 0.5,
+            beta: float = 1.0,
+            epsilon: float = 1e-8
+    ):
         super().__init__(average=average, threshold=threshold, num_classes=num_classes)
         self.beta = beta
         self.epsilon = epsilon
@@ -93,5 +204,29 @@ class PixelLevelFBeta(PixelLevelBase):
 
 
 class PixelLevelF1(PixelLevelFBeta):
-    def __init__(self, average='macro', threshold=0.5, num_classes=None):
-        super().__init__(average=average, threshold=threshold, num_classes=num_classes, beta=1.0)
+    """
+    Pixel-level f1 segmentation metric.
+
+    Attributes
+    -------------
+    average: str
+        Method of averaging.
+
+    num_classes: int
+        Number of classes.
+
+    threshold: float
+        Threshold for probabilities of pixels.
+
+    epsilon: float
+        Epsilon for correct evalating metric.
+    """
+
+    def __init__(
+            self,
+            average: str = 'macro',
+            num_classes: int = 0,
+            threshold: float = 0.5,
+            epsilon: float = 1e-8
+    ):
+        super().__init__(average=average, threshold=threshold, num_classes=num_classes, beta=1.0, epsilon=epsilon)

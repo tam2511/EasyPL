@@ -10,6 +10,17 @@ from easypl.metrics.utils import build_distance, available_distances
 class SearchMAP(Metric):
     """
     Version of mean average precision for search case
+
+    Attributes
+    ----------------
+    k: Union[int, List]
+        SearchMAP return top k (top (k[0], k[1], ...) if k is list) accuracy rate.
+    batch_size: int
+        Batch size for evaluate distance operations.
+    distance: Union[str, Callable]
+        Name or function of distance.
+    largest: bool
+        If True metric evaluate top largest samples, else evaluate smallest samples.
     """
 
     def __init__(
@@ -21,12 +32,6 @@ class SearchMAP(Metric):
             dist_sync_on_step: bool = False,
             compute_on_step: bool = True
     ):
-        """
-        :param k: SearchMAP return top k (top (k[0], k[1], ...) if k is list) accuracy rate
-        :param batch_size: batch size for evaluate distance operations
-        :param distance: name or function of distance
-        :param largest: if True metric evaluate top largest samples, else evaluate smallest samples
-        """
         super().__init__(dist_sync_on_step=dist_sync_on_step, compute_on_step=compute_on_step)
         self.k = k
         self.batch_size = batch_size

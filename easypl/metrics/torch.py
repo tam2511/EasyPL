@@ -1,3 +1,5 @@
+from typing import Optional, List
+
 from torchmetrics import *
 import torch
 
@@ -5,20 +7,28 @@ import torch
 class TorchMetric(Metric):
     """
     Wrapper for metrics from torchmetrics
+
+    Attributes
+    -----------
+    metric: Metric
+        Metric object from torchmetrics.
+
+    class_names: Optional[List]
+        Names of classes.
+
+    Examples
+    ------------
+    >>> from torchmetrics import F1
+    ... from easypl.metrics import TorchMetric
+    ... result_metric = TorchMetric(F1(), class_names=None)
+
     """
 
     def __init__(
             self,
             metric: Metric,
-            class_names: list = None
+            class_names: Optional[List] = None
     ):
-        """
-        :param metric: Metric object
-        :param class_names: None or list of class names
-        Example:
-        >>> from torchmetrics import F1
-        >>> result_metric = TorchMetric(F1(), class_names=None)
-        """
         super().__init__(dist_sync_on_step=metric.dist_sync_on_step, compute_on_step=metric.compute_on_step)
         self.class_names = class_names
         self.metric = metric

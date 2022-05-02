@@ -1,4 +1,4 @@
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Dict, Any
 import torch
 from torchmetrics import Metric
 
@@ -8,6 +8,41 @@ from easypl.lr_schedulers import WrapperScheduler
 
 
 class SegmentationLearner(BaseLearner):
+    """
+    Segmenatation learner.
+
+    Attributes
+    ----------
+    model: Optional[Union[torch.nn.Module, List[torch.nn.Module]]]
+        torch.nn.Module model.
+
+    loss: Optional[Union[torch.nn.Module, List[torch.nn.Module]]]
+        torch.nn.Module loss function.
+
+    optimizer: Optional[Union[WrapperOptimizer, List[WrapperOptimizer]]]
+        Optimizer wrapper object.
+
+    lr_scheduler: Optional[Union[WrapperScheduler, List[WrapperScheduler]]]
+        Scheduler object for lr scheduling.
+
+    train_metrics: Optional[List[Metric]]
+        List of train metrics.
+
+    val_metrics: Optional[List[Metric]]
+        List of validation metrics.
+
+    test_metrics: Optional[List[Metric]]
+        List of test metrics.
+
+    data_keys: Optional[List[str]]
+        List of data keys
+
+    target_keys: Optional[List[str]]
+        List of target keys
+
+    multilabel: bool
+        If segmentation task is multilabel.
+    """
     def __init__(
             self,
             model: Optional[Union[torch.nn.Module, List[torch.nn.Module]]] = None,
@@ -39,10 +74,45 @@ class SegmentationLearner(BaseLearner):
 
     __init__.__doc__ = BaseLearner.__init__.__doc__
 
-    def forward(self, samples):
+    def forward(
+            self,
+            samples: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Standart method for forwarding model.
+        Attributes
+        ----------
+        samples: torch.Tensor
+            Image tensor.
+
+        Returns
+        ----------
+        torch.Tensor
+            Output from model.
+        """
         return self.model(samples)
 
-    def loss_step(self, outputs, targets):
+    def loss_step(
+            self,
+            outputs: torch.Tensor,
+            targets: torch.Tensor
+    ) -> Dict:
+        """
+        Method fow loss evaluating.
+
+        Attributes
+        ----------
+        outputs: torch.Tensor
+            Outputs from model
+
+        targets: torch.Tensor
+            Targets from batch
+
+        Returns
+        ----------
+        Dict
+            Dict with keys: ["loss", "log"]
+        """
         loss = self.loss_f(
             outputs,
             targets.float() if self.multilabel or targets.ndim != 1 else targets.long()
@@ -54,7 +124,23 @@ class SegmentationLearner(BaseLearner):
             }
         }
 
-    def get_targets(self, batch):
+    def get_targets(
+            self,
+            batch: Dict
+    ) -> Dict:
+        """
+        Method for selecting and preprocessing targets from batch
+
+        Attributes
+        ----------
+        batch: Dict
+            Batch in step
+
+        Returns
+        ----------
+        Dict
+            Dict with keys: ["loss", "metric", "log"]
+        """
         targets = batch[self.target_keys[0]]
         return {
             'loss': targets.float() if self.multilabel or targets.ndim > 3 else targets.long(),
@@ -62,7 +148,23 @@ class SegmentationLearner(BaseLearner):
             'log': targets
         }
 
-    def get_outputs(self, batch):
+    def get_outputs(
+            self,
+            batch: Dict
+    ) -> Dict:
+        """
+        Abtract method for selecting and preprocessing outputs from batch
+
+        Attributes
+        ----------
+        batch: Dict
+            Batch in step
+
+        Returns
+        ----------
+        Dict
+            Dict with keys: ["loss", "metric", "log"]
+        """
         samples = batch[self.data_keys[0]]
         outputs = self.forward(samples)
         return {

@@ -1,11 +1,30 @@
 import torch
 import numpy as np
+import pytorch_lightning
 from pytorch_lightning.callbacks import Callback
-from typing import List, Dict
+from typing import List, Dict, Any, Tuple
 
 
 class BaseTestTimeAugmentation(Callback):
-    """ Base callback for test-time-augmentation """
+    """
+    Base callback for test-time-augmentation
+
+    Attributes
+    ----------
+    n: int
+        Number of augmentations.
+
+    augmentations: List
+        List of augmentations, which will be used.
+
+    augmentation_method: str
+        Method of selecting augmentations from list. Available: ["first", "random"]
+
+    phase: str
+        Phase which will be used by this predictor callback.
+        Available: ["val", "test", "predict"].
+
+    """
 
     def __init__(
             self,
@@ -14,9 +33,6 @@ class BaseTestTimeAugmentation(Callback):
             augmentation_method: str = 'first',
             phase='val'
     ):
-        """
-        :param augmentations: list of augmentation transforms
-        """
         super().__init__()
         self.n = n
         self.augmentations = augmentations
@@ -33,7 +49,23 @@ class BaseTestTimeAugmentation(Callback):
         self.collate_fns = []
         self.metrics = []
 
-    def post_init(self, trainer, pl_module):
+    def post_init(
+            self,
+            trainer: pytorch_lightning.Trainer,
+            pl_module: pytorch_lightning.LightningModule
+    ):
+        """
+        Abstract method for initialization in first batch handling. [NOT REQUIRED]
+
+        Attributes
+        ----------
+        trainer: pytorch_lightning.Trainer
+            Trainer of pytorch-lightning
+
+        pl_module: pytorch_lightning.LightningModule
+            LightningModule of pytorch-lightning
+
+        """
         pass
 
     def on_phase_start(self, trainer, pl_module):
@@ -99,19 +131,116 @@ class BaseTestTimeAugmentation(Callback):
                         prog_bar=True
                     )
 
-    def metric_formatting(self, outputs, targets):
+    def metric_formatting(
+            self,
+            outputs: Any,
+            targets: Any
+    ) -> Tuple:
+        """
+        Preparing before metric pass. On default, return passed values.
+
+        Attributes
+        ----------
+        outputs: Any
+            Output from model
+
+        targets: Any
+            Targets from batch
+
+        Returns
+        ----------
+        Tuple
+            Formatted outputs and targets
+        """
         return outputs, targets
 
-    def reduce(self, tensor):
+    def reduce(
+            self,
+            tensor: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Abstract method for reducing of results.
+
+        Attributes
+        ----------
+        tensor: torch.Tensor
+            Any tensor with size [batch_size X ...]
+
+        Returns
+        ----------
+        torch.Tensor
+            Reduced tensor
+
+        """
         raise NotImplementedError
 
-    def augment(self, sample: Dict, augmentation) -> Dict:
+    def augment(
+            self,
+            sample: Dict,
+            augmentation
+    ) -> Dict:
+        """
+        Abstract method for augmentation apply.
+
+        Attributes
+        ----------
+        sample: Dict
+            Any sample of batch
+
+        augmentation
+            Transform object
+
+        Returns
+        ----------
+        Dict
+            Augmented sample
+        """
         raise NotImplementedError
 
-    def preprocessing(self, sample: Dict, dataloader_idx: int) -> Dict:
+    def preprocessing(
+            self,
+            sample: Dict,
+            dataloader_idx: int = 0
+    ) -> Dict:
+        """
+        Abstract method for preprocessing sample
+
+        Attributes
+        ----------
+        sample: Dict
+            Any sample of batch
+
+        dataloader_idx: int
+            Index of dataloader
+
+        Returns
+        ----------
+        Dict
+            Preprocessed sample
+        """
         return sample
 
-    def postprocessing(self, sample: Dict, dataloader_idx: int) -> Dict:
+    def postprocessing(
+            self,
+            sample: Dict,
+            dataloader_idx: int = 0
+    ) -> Dict:
+        """
+        Abstract method for postprocessing sample
+
+        Attributes
+        ----------
+        sample: Dict
+            Any sample of batch
+
+        dataloader_idx: int
+            Index of dataloader
+
+        Returns
+        ----------
+        Dict
+            Postprocessed sample
+        """
         return sample
 
     def __augmentation_generator(self):
