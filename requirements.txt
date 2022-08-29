@@ -1,0 +1,8 @@
+pytorch-lightning
+pandas
+dill
+opencv-python
+matplotlib
+albumentations
+torchvision
+torchmetrics==0.6.0
