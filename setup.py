@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 from os.path import join, dirname
 
 setup(
-    name='easypl',
+    name='easyplib',
     version='0.1',
     author="Alexander Timofeev",
     author_email="tam2511@mail.ru",
@@ -10,7 +10,7 @@ setup(
     packages=find_packages(),
     long_description=open(join(dirname(__file__), 'README.md')).read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/tam2511/xvideos",
+    url="https://github.com/tam2511/EasyPL",
     install_requires=[
         'pytorch-lightning',
         'pandas',
