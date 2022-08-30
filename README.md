@@ -94,7 +94,7 @@ trainer.fit(learner, train_dataloaders=train_dataloader, val_dataloaders=[val_da
 
 ```
 
-##TODO
+## TODO
 - [ ] Learner for image detection task.
 - [ ] Learner for regression task.
 - [ ] Example learner for GAN training.

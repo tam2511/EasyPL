@@ -17,12 +17,12 @@ sys.path.insert(0, os.path.abspath('..\\..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'Easypl'
+project = 'EasyPL'
 copyright = '2022, Alexander Timofeev'
 author = 'Alexander Timofeev'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '0.3'
 
 # -- General configuration ---------------------------------------------------
 
@@ -62,7 +62,7 @@ html_static_path = ['_static']
 html_context = {
     'display_github': True,
     'github_user': 'tam2511',
-    'github_repo': 'easypl',
+    'github_repo': 'EasyPL',
     'github_version': 'master',
     'conf_py_path': '/docs/source/'
 }
