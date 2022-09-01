@@ -5,16 +5,11 @@ import torch
 
 
 class BasePostprocessing(object):
-    @abstractmethod
-    def targets_handle(
-            self,
-            targets: Any
-    ) -> torch.Tensor:
-        raise NotImplementedError
 
     @abstractmethod
-    def outputs_handle(
+    def __call__(
             self,
+            inputs: Any,
             outputs: Any
     ) -> torch.Tensor:
         raise NotImplementedError

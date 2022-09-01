@@ -144,8 +144,8 @@ class DetectionLearner(BaseLearner):
         targets = batch[self.target_keys[0]]
         return {
             'loss': targets,
-            'metric': targets if self.postprocessing is None else self.postprocessing.targets_handle(targets),
-            'log': targets if self.postprocessing is None else self.postprocessing.targets_handle(targets)
+            'metric': targets,
+            'log': targets
         }
 
     def get_outputs(
@@ -169,6 +169,6 @@ class DetectionLearner(BaseLearner):
         outputs = self.forward(samples)
         return {
             'loss': outputs,
-            'metric': outputs if self.postprocessing is None else self.postprocessing.outputs_handle(outputs),
-            'log': outputs if self.postprocessing is None else self.postprocessing.outputs_handle(outputs),
+            'metric': outputs if self.postprocessing is None else self.postprocessing(samples, outputs),
+            'log': outputs if self.postprocessing is None else self.postprocessing(samples, outputs),
         }
