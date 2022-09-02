@@ -48,7 +48,7 @@ class BasePostprocessing(object):
             image_scales: torch.Tensor,
     ) -> torch.Tensor:
         """
-        Outputs handling for predict stage. Must return result in (x1, y1, x2, y2, class_idx, class_prob) form.
+        Outputs handling for predict stage. Must return result in (x1, y1, x2, y2, class_prob, class_idx) form.
 
         Attributes
         ----------
