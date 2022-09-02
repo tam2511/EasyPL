@@ -55,6 +55,8 @@ class DetectionLearner(BaseLearner):
             test_metrics: Optional[List[Metric]] = None,
             data_keys: Optional[List[str]] = None,
             target_keys: Optional[List[str]] = None,
+            image_size_key: Optional[str] = None,
+            image_scale_key: Optional[str] = None,
             postprocessing: Optional[BasePostprocessing] = None
     ):
         super().__init__(
@@ -70,6 +72,8 @@ class DetectionLearner(BaseLearner):
         )
         if len(data_keys) != 1:
             raise ValueError('"data_keys" and "target_keys" must be one element')
+        self.image_size_key = image_size_key
+        self.image_scale_key = image_scale_key
         self.postprocessing = postprocessing
 
     __init__.__doc__ = BaseLearner.__init__.__doc__
@@ -113,15 +117,13 @@ class DetectionLearner(BaseLearner):
         Dict
             Dict with keys: ["loss", "log"]
         """
-        loss = self.loss_f(
+        losses = self.loss_f(
             outputs,
             targets
         )
         return {
-            'loss': loss,
-            'log': {
-                'loss': loss
-            }
+            'loss': losses['loss'],
+            'log': losses
         }
 
     def get_targets(
@@ -142,10 +144,15 @@ class DetectionLearner(BaseLearner):
             Dict with keys: ["loss", "metric", "log"]
         """
         targets = batch[self.target_keys[0]]
+        image_scales = batch[self.image_scale_key]
+        transformed_targets = targets if self.postprocessing is None else self.postprocessing.targets_handle(
+            targets,
+            image_scales
+        )
         return {
             'loss': targets,
-            'metric': targets,
-            'log': targets
+            'metric': transformed_targets,
+            'log': transformed_targets
         }
 
     def get_outputs(
@@ -167,8 +174,15 @@ class DetectionLearner(BaseLearner):
         """
         samples = batch[self.data_keys[0]]
         outputs = self.forward(samples)
+        image_sizes = batch[self.image_size_key]
+        image_scales = batch[self.image_scale_key]
+        transformed_outputs = outputs if self.postprocessing is None else self.postprocessing.outputs_handle(
+            outputs,
+            image_sizes,
+            image_scales,
+        )
         return {
             'loss': outputs,
-            'metric': outputs if self.postprocessing is None else self.postprocessing(samples, outputs),
-            'log': outputs if self.postprocessing is None else self.postprocessing(samples, outputs),
+            'metric': transformed_outputs,
+            'log': transformed_outputs,
         }
