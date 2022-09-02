@@ -1,1 +1,2 @@
 from easypl.callbacks.finetuners.sequential_tuner import SequentialFinetuning
+from easypl.callbacks.finetuners.optimizer_initializator import OptimizerInitialization
