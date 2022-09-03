@@ -5,6 +5,7 @@ from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from torchmetrics import Metric
 
 
+# TODO: slow compute and memory leak in torchmetrics MAP?
 class MAP(Metric):
     def __init__(
             self,
@@ -32,15 +33,15 @@ class MAP(Metric):
     ):
         preds_ = [
             dict(
-                boxes=pred[:, :4],
-                scores=pred[:, 4],
-                labels=pred[:, 5].long(),
+                boxes=pred[:, :4].cpu(),
+                scores=pred[:, 4].cpu(),
+                labels=pred[:, 5].long().cpu(),
             ) for pred in preds]
 
         targets_ = [
             dict(
-                boxes=target[torch.where(target[:, 4] > -1)[0]][:, :4],
-                labels=target[torch.where(target[:, 4] > -1)[0]][:, 4]
+                boxes=target[torch.where(target[:, 4] > -1)[0]][:, :4].cpu(),
+                labels=target[torch.where(target[:, 4] > -1)[0]][:, 4].cpu()
             ) for target in targets
         ]
         self.metric.update(preds_, targets_)
