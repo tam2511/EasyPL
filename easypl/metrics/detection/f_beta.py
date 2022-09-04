@@ -36,7 +36,7 @@ class FBetaDetection(BaseDetectionMetric):
         optimal_precision = torch.index_select(precision, dim=-1, index=conf_idx)
         optimal_recall = torch.index_select(recall, dim=-1, index=conf_idx)
         return {
-            'f\{{}\}'.format(self.beta): optimal_fbeta,
+            'F{}'.format('{' + '{:.2f}'.format(self.beta) + '}'): optimal_fbeta,
             'precision': optimal_precision,
             'recall': optimal_recall,
             'optimal_confidence': conf
