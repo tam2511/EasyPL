@@ -4,9 +4,10 @@ Learners
 .. toctree::
    :maxdepth: 3
 
-   learners/ClassificatorLearner
+   learners/ClassificationLearner
    learners/RecognitionLearner
    learners/SegmentationLearner
+   learners/DetectionLearner
 
 
 .. autoclass:: easypl.learners.base.BaseLearner

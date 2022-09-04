@@ -28,7 +28,7 @@ Than you can import EasyPL packages, as like:
 
 .. code-block:: python
 
-    from easypl.learners import ClassificatorLearner
+    from easypl.learners import ClassificationLearner
     from easypl.metrics import TorchMetric
     from easypl.optimizers import WrapperOptimizer
     from easypl.lr_schedulers import WrapperScheduler
@@ -110,7 +110,7 @@ In finally, we should define learner and trainer, and than run training.
 
 .. code-block:: python
 
-    learner = ClassificatorLearner(
+    learner = ClassificationLearner(
         model=model,
         loss=loss_f,
         optimizer=optimizer,
