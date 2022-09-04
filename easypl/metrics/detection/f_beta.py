@@ -32,7 +32,7 @@ class FBetaDetection(BaseDetectionMetric):
         recall = (self.tp / (self.tp + self.fn + self.eps)).mean(-1)
         fbeta = (1 + self.beta ** 2) * precision * recall / (self.beta ** 2 * precision + recall)
         optimal_fbeta, conf_idx = torch.max(fbeta, dim=-1)
-        conf = self.cofidences[conf_idx]
+        conf = self.confidences[conf_idx]
         optimal_precision = torch.index_select(precision, dim=-1, index=conf_idx)
         optimal_recall = torch.index_select(recall, dim=-1, index=conf_idx)
         return {
