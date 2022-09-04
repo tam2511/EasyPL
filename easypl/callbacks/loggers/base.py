@@ -304,10 +304,9 @@ class BaseSampleLogger(Callback):
             outputs,
             batch,
             batch_idx,
-            dataloader_idx,
     ):
         if self.phase == 'train':
-            self.__on_batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
+            self.__on_batch_end(trainer, pl_module, outputs, batch, batch_idx, 0)
 
     def on_validation_batch_end(
             self,
