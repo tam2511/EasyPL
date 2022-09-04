@@ -237,7 +237,7 @@ class DetectionImageLogger(BaseImageLogger):
             message: Optional[str] = None,
             color: Tuple = (255, 0, 0),
     ):
-        image = cv2.rectange(image, box[:2], box[2:], color=color, thickness=THICKNESS)
+        image = cv2.rectangle(image, box[:2], box[2:], color=color, thickness=THICKNESS)
         if message is None:
             return image
         image = cv2.putText(
