@@ -95,6 +95,10 @@ class CSVDatasetDetection(PathBaseDataset):
             for _ in label
         ])
         annotations = np.concatenate((boxes, classes), axis=1)
+        if self.transform:
+            result = self.transform(image=image, bboxes=annotations)
+            image = result['image']
+            annotations = result['bboxes']
         return {
             'image': image,
             'annotations': annotations

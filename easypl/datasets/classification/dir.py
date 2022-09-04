@@ -83,6 +83,8 @@ class DirDatasetClassification(PathBaseDataset):
         """
         image_path = self.image_paths[idx]
         image = self._read_image(image_path)
+        if self.transform:
+            image = self.transform(image=image)['image']
         if not self.return_label:
             return {
                 'image': image

@@ -81,6 +81,8 @@ class CSVDatasetClassification(PathBaseDataset):
             {"image": ...} or {"image": ..., "target": ...}
         """
         image = self._read_image(self.images[idx])
+        if self.transform:
+            image = self.transform(image=image)['image']
         if not self.return_label:
             return {
                 'image': image

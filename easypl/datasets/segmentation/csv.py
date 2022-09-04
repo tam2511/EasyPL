@@ -97,6 +97,10 @@ class CSVDatasetSegmentation(PathBaseDataset):
             read_flag=cv2.IMREAD_GRAYSCALE,
             to_rgb=False
         ).astype('int64')
+        if self.transform:
+            result = self.transform(image=image, mask=mask)
+            image = result['image']
+            mask = result['mask']
         return {
             'image': image,
             'mask': mask
