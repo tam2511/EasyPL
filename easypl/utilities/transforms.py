@@ -1,3 +1,5 @@
+from typing import List, Tuple, Callable
+
 from albumentations.augmentations.transforms import Normalize
 from albumentations.core.composition import Compose
 from albumentations.pytorch.transforms import ToTensorV2
@@ -38,7 +40,9 @@ class ToImage(BasicTransform):
         return {}
 
 
-def inv_transform(transforms: list):
+def inv_transform(
+        transforms: List
+):
     inv_transforms = []
     for transform_idx in range(len(transforms)):
         transform_ = transforms[transform_idx]
@@ -55,6 +59,7 @@ def inv_transform(transforms: list):
                           max_pixel_value=1.0))
     inv_transforms = inv_transforms[::-1]
     return Compose(inv_transforms)
+
 
 def main_transform(transforms: list):
     main_transforms = []

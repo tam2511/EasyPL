@@ -7,6 +7,30 @@ from easypl.metrics.detection.base import BaseDetectionMetric
 
 
 class FBetaDetection(BaseDetectionMetric):
+    """
+    Evaluate optimal confidence by F beta metric and return with precision, recall values.
+
+    Attributes
+    ----------------
+    iou_threshold: Union[float, List[float]]
+        Iou threshold/thresholds for boxes.
+
+    confidence: Optional[List[float]]
+        Confidence/confidences thresholds or None. If is None then evaluate as arange from 0 to 1 with step 0.05.
+
+    num_classes: Optional[int]
+        Number of classes.
+
+    beta: float
+        Parameter of F metric.
+
+    eps: float
+        Epsilon.
+
+    kwargs
+        Torchmetrics Metric args.
+
+    """
     def __init__(
             self,
             iou_threshold: Union[float, List[float]],

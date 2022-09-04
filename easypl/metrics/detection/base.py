@@ -6,6 +6,24 @@ from torchmetrics import Metric
 
 
 class BaseDetectionMetric(Metric):
+    """
+    Base detection metric. Compute true positive, false negative and false positive metrics.
+
+    Attributes
+    ----------------
+    iou_threshold: Union[float, List[float]]
+        Iou threshold/thresholds for boxes.
+
+    confidence: Union[float, List[float]]
+        Confidence/confidences thresholds.
+
+    num_classes: Optional[int]
+        Number of classes.
+
+    kwargs
+        Torchmetrics Metric args.
+
+    """
     def __init__(
             self,
             iou_threshold: Union[float, List[float]],

@@ -7,7 +7,7 @@ from easypl.optimizers import WrapperOptimizer
 from easypl.lr_schedulers import WrapperScheduler
 
 
-class ClassificatorLearner(BaseLearner):
+class ClassificationLearner(BaseLearner):
     """
     Classification learner.
 
