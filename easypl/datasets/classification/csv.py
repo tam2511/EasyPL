@@ -14,7 +14,7 @@ class CSVDatasetClassification(PathBaseDataset):
         path to csv file with paths of images
 
     return_label: bool
-        if True return (image, label), else return only image
+        if True return dict with two keys (image, target), else return dict with one key (image)
 
     image_column: Optional[str]
         column name or None. If None then will be getting the first column
@@ -81,6 +81,8 @@ class CSVDatasetClassification(PathBaseDataset):
             {"image": ...} or {"image": ..., "target": ...}
         """
         image = self._read_image(self.images[idx])
+        if self.transform:
+            image = self.transform(image=image)['image']
         if not self.return_label:
             return {
                 'image': image

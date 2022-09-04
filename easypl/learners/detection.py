@@ -5,11 +5,12 @@ from torchmetrics import Metric
 from easypl.learners.base import BaseLearner
 from easypl.optimizers import WrapperOptimizer
 from easypl.lr_schedulers import WrapperScheduler
+from easypl.utilities.detection import BasePostprocessing
 
 
-class ClassificationLearner(BaseLearner):
+class DetectionLearner(BaseLearner):
     """
-    Classification learner.
+    Detection learner.
 
     Attributes
     ----------
@@ -40,8 +41,8 @@ class ClassificationLearner(BaseLearner):
     target_keys: Optional[List[str]]
         List of target keys
 
-    multilabel: bool
-        If classification task is multilabel.
+    postprocessing: Optional
+        If postprocessing is not None then this
     """
     def __init__(
             self,
@@ -54,7 +55,9 @@ class ClassificationLearner(BaseLearner):
             test_metrics: Optional[List[Metric]] = None,
             data_keys: Optional[List[str]] = None,
             target_keys: Optional[List[str]] = None,
-            multilabel: bool = False
+            image_size_key: Optional[str] = None,
+            image_scale_key: Optional[str] = None,
+            postprocessing: Optional[BasePostprocessing] = None
     ):
         super().__init__(
             model=model,
@@ -69,7 +72,9 @@ class ClassificationLearner(BaseLearner):
         )
         if len(data_keys) != 1:
             raise ValueError('"data_keys" and "target_keys" must be one element')
-        self.multilabel = multilabel
+        self.image_size_key = image_size_key
+        self.image_scale_key = image_scale_key
+        self.postprocessing = postprocessing
 
     __init__.__doc__ = BaseLearner.__init__.__doc__
 
@@ -112,15 +117,13 @@ class ClassificationLearner(BaseLearner):
         Dict
             Dict with keys: ["loss", "log"]
         """
-        loss = self.loss_f(
+        losses = self.loss_f(
             outputs,
-            targets.float() if self.multilabel or targets.ndim != 1 else targets.long()
+            targets
         )
         return {
-            'loss': loss,
-            'log': {
-                'loss': loss
-            }
+            'loss': losses['loss'],
+            'log': losses
         }
 
     def get_targets(
@@ -141,10 +144,15 @@ class ClassificationLearner(BaseLearner):
             Dict with keys: ["loss", "metric", "log"]
         """
         targets = batch[self.target_keys[0]]
+        image_scales = batch[self.image_scale_key]
+        transformed_targets = targets if self.postprocessing is None else self.postprocessing.targets_handle(
+            targets,
+            image_scales
+        )
         return {
-            'loss': targets.float() if self.multilabel or targets.ndim != 1 else targets.long(),
-            'metric': targets if targets.ndim == 1 or self.multilabel else targets.argmax(dim=1),
-            'log': targets
+            'loss': targets,
+            'metric': transformed_targets,
+            'log': transformed_targets
         }
 
     def get_outputs(
@@ -166,8 +174,15 @@ class ClassificationLearner(BaseLearner):
         """
         samples = batch[self.data_keys[0]]
         outputs = self.forward(samples)
+        image_sizes = batch[self.image_size_key]
+        image_scales = batch[self.image_scale_key]
+        transformed_outputs = outputs if self.postprocessing is None else self.postprocessing.outputs_handle(
+            outputs,
+            image_sizes,
+            torch.ones_like(image_scales, dtype=image_scales.dtype, device=image_scales.device),
+        )
         return {
             'loss': outputs,
-            'metric': outputs.sigmoid() if self.multilabel else outputs.argmax(dim=1),
-            'log': outputs.sigmoid() if self.multilabel else outputs.softmax(dim=1),
+            'metric': transformed_outputs,
+            'log': transformed_outputs,
         }

@@ -16,13 +16,13 @@ class CSVDatasetSegmentation(PathBaseDataset):
         path to csv file with paths of images
 
     return_label: bool
-        if True return (image, label), else return only image
+        if True return dict with two keys (image, mask), else return dict with one key (image)
 
     image_column: Optional[str]
         column name or None. If None then will be getting the first column
 
     target_column: Optional[str]
-        column name or None. If None then will be getting all but the first column
+        column name or None. If None then will be getting all but the second column
 
     image_prefix: str
         path prefix which will be added to paths of images in csv file
@@ -97,6 +97,10 @@ class CSVDatasetSegmentation(PathBaseDataset):
             read_flag=cv2.IMREAD_GRAYSCALE,
             to_rgb=False
         ).astype('int64')
+        if self.transform:
+            result = self.transform(image=image, mask=mask)
+            image = result['image']
+            mask = result['mask']
         return {
             'image': image,
             'mask': mask

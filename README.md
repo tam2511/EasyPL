@@ -73,7 +73,7 @@ tta = ClassificationImageTestTimeAugmentation(
 The final part of the training pipeline is the definition of the Learner class and the standard launch of training through the Trainer from the PyTorch Lightning library.
 
 ```python
-learner = ClassificatorLearner(
+learner = ClassificationLearner(
     model=model,
     loss=loss_f,
     optimizer=optimizer,

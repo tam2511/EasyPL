@@ -79,8 +79,6 @@ class PathBaseDataset(Dataset):
         elif self.image_prefix != '':
             image_path = os.path.join(self.image_prefix, image_path)
         image = read_image(image_path, **image_read_kwargs)
-        if self.transform:
-            image = self.transform(image=image)['image']
         return image
 
     def __getitem__(

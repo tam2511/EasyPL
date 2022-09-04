@@ -81,7 +81,7 @@ class BaseImageLogger(BaseSampleLogger):
                 inv_transform(
                     trainer.__getattribute__(
                         f'{self.phase}_dataloaders'
-                    )[dataloader_idx].dataset.transform.transforms.transforms
+                    )[dataloader_idx].dataset.transform.transforms
                 )
             )
 

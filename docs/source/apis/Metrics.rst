@@ -6,6 +6,7 @@ Metrics
 
    metrics/Classification
    metrics/Segmentation
+   metrics/Detection
 
 .. autoclass:: easypl.metrics.base.MetricsList
     :members:

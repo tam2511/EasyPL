@@ -46,6 +46,7 @@ class BaseLearner(LightningModule):
     target_keys: Optional[List[str]]
         List of target keys
     """
+
     def __init__(
             self,
             model: Optional[Union[torch.nn.Module, List[torch.nn.Module]]] = None,
@@ -62,6 +63,7 @@ class BaseLearner(LightningModule):
         self.model = torch.nn.ModuleList(model) if isinstance(model, list) else model
         self.loss_f = loss
         self.optimizer = optimizer
+        self.precomputed_optimizer = None
         self.lr_scheduler = lr_scheduler
         self.metrics = {
             'train': [MetricsList()],
@@ -240,7 +242,7 @@ class BaseLearner(LightningModule):
     def test_epoch_end(self, val_step_outputs):
         self.__epoch_end(phase='test')
 
-    def configure_optimizers(self):
+    def __base_optimizer_initialization(self):
         if isinstance(self.optimizer, list):
             if not isinstance(self.model, torch.nn.ModuleList):
                 raise ValueError('For multiple optimizers need multiple models with same len.')
@@ -255,6 +257,11 @@ class BaseLearner(LightningModule):
             optimizers = [
                 self.optimizer(filter(lambda p: p.requires_grad, self.model.parameters()))
             ]
+        return optimizers
+
+    def configure_optimizers(self):
+        optimizers = self.__base_optimizer_initialization() if self.precomputed_optimizer is None else self.precomputed_optimizer
+
         if isinstance(self.lr_scheduler, list):
             if len(optimizers) != len(self.lr_scheduler):
                 raise ValueError('Number of lr_schedulers must be equal number of optimizers')

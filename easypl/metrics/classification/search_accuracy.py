@@ -4,7 +4,7 @@ import torch
 import numpy as np
 from torch.nn.functional import normalize
 
-from easypl.metrics.utils import build_distance, available_distances
+from easypl.metrics.utils import build_distance
 
 
 class SearchAccuracy(Metric):
