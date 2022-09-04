@@ -16,7 +16,7 @@ class FBetaDetection(BaseDetectionMetric):
             eps: float = 1e-9,
             **kwargs
     ):
-        confidence = confidence if confidence is None else list(np.arange(0.0, 1.0, 0.05))
+        confidence = confidence if confidence is not None else list(np.arange(0.0, 1.0, 0.05))
         super().__init__(
             iou_threshold=iou_threshold,
             confidence=confidence,
