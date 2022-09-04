@@ -20,7 +20,8 @@ class FBetaDetection(BaseDetectionMetric):
         super().__init__(
             iou_threshold=iou_threshold,
             confidence=confidence,
-            num_classes=num_classes
+            num_classes=num_classes,
+            **kwargs
         )
         self.beta = beta
         self.eps = eps

@@ -15,7 +15,7 @@ class MAP(Metric):
             class_metrics: bool = False,
             **kwargs
     ):
-        super().__init__()
+        super().__init__(**kwargs)
         self.metric = MeanAveragePrecision(
             box_format='xyxy',
             iou_type='bbox',
