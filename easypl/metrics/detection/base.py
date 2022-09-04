@@ -11,10 +11,9 @@ class BaseDetectionMetric(Metric):
             iou_threshold: Union[float, List[float]],
             confidence: Union[float, List[float]],
             num_classes: Optional[int] = None,
-            dist_sync_on_step: bool = False,
-            compute_on_step: bool = True,
+            **kwargs
     ):
-        super().__init__(dist_sync_on_step=dist_sync_on_step, compute_on_step=compute_on_step)
+        super().__init__(**kwargs)
         iou_thresholds = torch.tensor(
             iou_threshold if isinstance(iou_threshold, list) else [iou_threshold]
         )
