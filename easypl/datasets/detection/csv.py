@@ -2,6 +2,7 @@ import json
 from typing import Callable, Optional, Dict
 import pandas as pd
 import numpy as np
+import torch
 
 from easypl.datasets.base import PathBaseDataset
 
@@ -95,11 +96,17 @@ class CSVDatasetDetection(PathBaseDataset):
             for _ in label
         ])
         annotations = np.concatenate((boxes, classes), axis=1)
+        h, w = image.shape[:2]
         if self.transform:
             result = self.transform(image=image, bboxes=annotations)
             image = result['image']
             annotations = result['bboxes']
+        new_h, new_w = image.shape[:2]
+        image_size = torch.tensor([new_w, new_h], dtype=torch.long)
+        image_scale = torch.tensor([w, h], dtype=torch.long) / image_size
         return {
             'image': image,
-            'annotations': annotations
+            'annotations': annotations,
+            'image_size': image_size,
+            'image_scale': image_scale
         }

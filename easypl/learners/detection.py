@@ -179,7 +179,7 @@ class DetectionLearner(BaseLearner):
         transformed_outputs = outputs if self.postprocessing is None else self.postprocessing.outputs_handle(
             outputs,
             image_sizes,
-            image_scales,
+            torch.ones_like(image_scales, dtype=image_scales.dtype, device=image_scales.device),
         )
         return {
             'loss': outputs,
