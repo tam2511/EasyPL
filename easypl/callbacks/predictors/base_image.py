@@ -45,14 +45,14 @@ class BaseImageTestTimeAugmentation(BaseTestTimeAugmentation):
                 inv_transform(
                     trainer.__getattribute__(
                         f'{self.phase}_dataloaders'
-                    )[dataloader_idx].dataset.transform.transforms.transforms
+                    )[dataloader_idx].dataset.transform.transforms
                 )
             )
             self.transform.append(
                 main_transform(
                     trainer.__getattribute__(
                         f'{self.phase}_dataloaders'
-                    )[dataloader_idx].dataset.transform.transforms.transforms
+                    )[dataloader_idx].dataset.transform.transforms
                 )
             )
 
