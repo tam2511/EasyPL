@@ -5,7 +5,6 @@ from typing import List, Dict, Optional, Callable, Any
 import pytorch_lightning
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.supporters import CombinedLoader
-from pytorch_lightning.loggers import *
 
 from easypl.callbacks.loggers.collector import ImageCollector
 
@@ -220,9 +219,11 @@ class BaseSampleLogger(Callback):
     def __log(self, samples: List, dataloader_idx: int = 0):
         if len(samples) == 0:
             return
-        if isinstance(self.logger, WandbLogger):
+        if self.logger is None:
+            self.save_on_disk = True
+        elif self.logger.__class__.__name__ == 'WandbLogger':
             self._log_wandb(samples, dataloader_idx)
-        elif isinstance(self.logger, TensorBoardLogger):
+        elif self.logger.__class__.__name__ == 'TensorBoardLogger':
             self._log_tensorboard(samples, dataloader_idx)
         else:
             warnings.warn(f'{self.logger.__class__.__name__} is not supported. Samples will log on disk.', Warning,
