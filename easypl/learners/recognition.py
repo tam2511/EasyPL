@@ -96,7 +96,8 @@ class RecognitionLearner(BaseLearner):
     def loss_step(
             self,
             outputs: torch.Tensor,
-            targets: torch.Tensor
+            targets: torch.Tensor,
+            optimizer_idx: int = 0
     ) -> Dict:
         """
         Method fow loss evaluating.
@@ -108,6 +109,9 @@ class RecognitionLearner(BaseLearner):
 
         targets: torch.Tensor
             Targets from batch
+
+        optimizer_idx: int
+            Index of optimizer
 
         Returns
         ----------
@@ -127,7 +131,8 @@ class RecognitionLearner(BaseLearner):
 
     def get_targets(
             self,
-            batch: Dict
+            batch: Dict,
+            optimizer_idx: int = 0
     ) -> Dict:
         """
         Method for selecting and preprocessing targets from batch
@@ -136,6 +141,9 @@ class RecognitionLearner(BaseLearner):
         ----------
         batch: Dict
             Batch in step
+
+        optimizer_idx: int
+            Index of optimizer
 
         Returns
         ----------
@@ -151,7 +159,8 @@ class RecognitionLearner(BaseLearner):
 
     def get_outputs(
             self,
-            batch: Dict
+            batch: Dict,
+            optimizer_idx: int = 0
     ) -> Dict:
         """
         Abtract method for selecting and preprocessing outputs from batch
@@ -160,6 +169,9 @@ class RecognitionLearner(BaseLearner):
         ----------
         batch: Dict
             Batch in step
+
+        optimizer_idx: int
+            Index of optimizer
 
         Returns
         ----------

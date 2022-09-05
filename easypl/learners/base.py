@@ -184,7 +184,8 @@ class BaseLearner(LightningModule):
             self.__log_lr()
         if len(self.metrics[phase]) <= dataloader_idx:
             self.metrics[phase].append(self.metrics[phase][-1].clone())
-        self.metrics[phase][dataloader_idx].update(outputs['metric'], targets['metric'])
+        if outputs['metric'] is not None and targets['metric'] is not None:
+            self.metrics[phase][dataloader_idx].update(outputs['metric'], targets['metric'])
         ret = {'loss': loss['loss']}
         if self.return_output_phase[phase]:
             ret['output'] = to_(outputs['log'], device='cpu')
