@@ -161,9 +161,9 @@ class GANLearner(BaseLearner):
             Dict with keys: ["loss", "metric", "log"]
         """
         targets = batch[self.target_keys[0]]
-        valid = torch.ones(targets.size(0), 1)
+        valid = torch.ones(targets.size(0))
         valid = valid.type_as(targets)
-        fake = torch.zeros(targets.size(0), 1)
+        fake = torch.zeros(targets.size(0))
         fake = fake.type_as(targets)
         return {
             'loss': {
