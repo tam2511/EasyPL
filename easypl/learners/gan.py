@@ -85,7 +85,7 @@ class GANLearner(BaseLearner):
         torch.Tensor
             Output from model.
         """
-        return self.model(samples)
+        return self.model[0](samples)
 
     def loss_step(
             self,
