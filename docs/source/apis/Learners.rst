@@ -8,6 +8,7 @@ Learners
    learners/RecognitionLearner
    learners/SegmentationLearner
    learners/DetectionLearner
+   learners/GANLearner
 
 
 .. autoclass:: easypl.learners.base.BaseLearner
