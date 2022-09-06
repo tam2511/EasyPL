@@ -76,7 +76,7 @@ class GANImageLogger(BaseImageLogger):
             save_on_disk=save_on_disk
         )
         self.dpi = dpi
-        self.pad = 20
+        self.pad = 50
 
     def get_log(
             self,
@@ -169,7 +169,7 @@ class GANImageLogger(BaseImageLogger):
             pred_image: np.ndarray
     ) -> np.ndarray:
         h, w = gt_image.shape[:2]
-        fig = plt.figure(figsize=((2 * w + 4 * self.pad) / 100, (h + self.pad) / 100), dpi=self.dpi)
+        fig = plt.figure(figsize=((2 * w + 4 * self.pad) / 100, (h + 2 * self.pad) / 100), dpi=self.dpi)
         canvas = FigureCanvas(fig)
         fig.add_subplot(1, 2, 1)
         plt.imshow(gt_image)
