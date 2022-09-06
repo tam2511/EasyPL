@@ -287,7 +287,7 @@ class BaseSampleLogger(Callback):
             self.__main_post_init(trainer, pl_module)
             self._post_init(trainer, pl_module)
             self.is_init = True
-
+        print(outputs)
         output = outputs['output']
         target = outputs['target']
         for i in range(len(output)):
