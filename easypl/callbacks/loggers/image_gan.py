@@ -11,11 +11,6 @@ import matplotlib.pyplot as plt
 
 from easypl.callbacks.loggers.base_image import BaseImageLogger
 
-THICKNESS = 2
-PAD = 10
-PRED_COLOR = (0, 255, 0)
-TARGET_COLOR = (255, 0, 0)
-
 
 class GANImageLogger(BaseImageLogger):
     """
@@ -91,13 +86,13 @@ class GANImageLogger(BaseImageLogger):
         Attributes
         ----------
         sample: np.ndarray
-            Predicted image in numpy ndarray format.
+            Noise.
 
         output: torch.Tensor
-            Output of model in Tensor format.
+            Predicted image.
 
         target: torch.Tensor
-            Target of record of dataset in Tensor format.
+            Target image.
 
         dataloader_idx: int, default: 0
             Index of dataloader.

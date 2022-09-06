@@ -3,7 +3,7 @@ from os.path import join, dirname
 
 setup(
     name='easyplib',
-    version='0.4',
+    version='0.5',
     author="Alexander Timofeev",
     author_email="tam2511@mail.ru",
     python_requires=">=3.6",
