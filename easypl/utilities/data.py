@@ -88,5 +88,5 @@ def slice_by_batch_size(
     for key in (object if keys is None else keys):
         if isinstance(object[key], dict):
             slice_by_batch_size(object[key], batch_size, None)
-        else:
+        elif isinstance(object[key], (torch.Tensor, np.ndarray, list)):
             object[key] = object[key][:batch_size]

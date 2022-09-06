@@ -9,6 +9,7 @@ Loggers
    loggers/ClassificationImageLogger
    loggers/SegmentationImageLogger
    loggers/DetectionImageLogger
+   loggers/GANImageLogger
 
 .. autoclass:: easypl.callbacks.loggers.base.BaseSampleLogger
     :members: _log_wandb, _log_tensorboard, _log_on_disk, _post_init

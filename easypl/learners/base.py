@@ -93,7 +93,8 @@ class BaseLearner(LightningModule):
     def loss_step(
             self,
             outputs: Any,
-            targets: Any
+            targets: Any,
+            optimizer_idx: int = 0
     ) -> Dict:
         """
         Abstract method fow loss evaluating.
@@ -115,7 +116,8 @@ class BaseLearner(LightningModule):
 
     def get_targets(
             self,
-            batch: Dict
+            batch: Dict,
+            optimizer_idx: int = 0
     ) -> Dict:
         """
         Abtract method for selecting and preprocessing targets from batch
@@ -134,7 +136,8 @@ class BaseLearner(LightningModule):
 
     def get_outputs(
             self,
-            batch: Dict
+            batch: Dict,
+            optimizer_idx: int = 0
     ) -> Dict:
         """
         Abtract method for selecting and preprocessing outputs from batch
@@ -151,15 +154,24 @@ class BaseLearner(LightningModule):
         """
         raise NotImplementedError
 
-    def __step(self, batch, batch_idx, dataloader_idx=0, phase='train', log_on_step=True, log_on_epoch=False,
-               log_prog_bar=True):
+    def __step(
+            self,
+            batch,
+            batch_idx,
+            optimizer_idx=0,
+            dataloader_idx=0,
+            phase='train',
+            log_on_step=True,
+            log_on_epoch=False,
+            log_prog_bar=True
+    ):
         log_prefix = f'{phase}_{dataloader_idx}' if dataloader_idx > 0 else phase
-        targets = self.get_targets(batch)
-        outputs = self.get_outputs(batch)
+        targets = self.get_targets(batch, optimizer_idx=optimizer_idx)
+        outputs = self.get_outputs(batch, optimizer_idx=optimizer_idx)
         if 'batch_size' in batch:
             slice_by_batch_size(targets, batch['batch_size'], ['loss', 'metric'])
             slice_by_batch_size(outputs, batch['batch_size'], ['loss', 'metric'])
-        loss = self.loss_step(outputs['loss'], targets['loss'])
+        loss = self.loss_step(outputs['loss'], targets['loss'], optimizer_idx=optimizer_idx)
         for key in loss['log']:
             self.formated_log(
                 f'{log_prefix}/loss_{key}' if key != 'loss' else f'{log_prefix}/loss',
@@ -172,7 +184,8 @@ class BaseLearner(LightningModule):
             self.__log_lr()
         if len(self.metrics[phase]) <= dataloader_idx:
             self.metrics[phase].append(self.metrics[phase][-1].clone())
-        self.metrics[phase][dataloader_idx].update(outputs['metric'], targets['metric'])
+        if outputs['metric'] is not None and targets['metric'] is not None:
+            self.metrics[phase][dataloader_idx].update(outputs['metric'], targets['metric'])
         ret = {'loss': loss['loss']}
         if self.return_output_phase[phase]:
             ret['output'] = to_(outputs['log'], device='cpu')
@@ -221,9 +234,9 @@ class BaseLearner(LightningModule):
         else:
             self.__log_lr_optimizer(optimizer=optimizers)
 
-    def training_step(self, batch, batch_idx):
-        return self.__step(batch=batch, batch_idx=batch_idx, phase='train', log_on_step=True, log_on_epoch=False,
-                           log_prog_bar=True)
+    def training_step(self, batch, batch_idx, optimizer_idx=0):
+        return self.__step(batch=batch, batch_idx=batch_idx, optimizer_idx=optimizer_idx, phase='train',
+                           log_on_step=True, log_on_epoch=False, log_prog_bar=True)
 
     def training_epoch_end(self, train_step_outputs):
         self.__epoch_end(phase='train')

@@ -36,5 +36,6 @@ class WrapperScheduler(object):
 
         """
         scheduler = self.scheduler_class(optimizer=optimizer, **self.kwargs)
-        self.options['scheduler'] = scheduler
-        return self.options
+        options = self.options.copy()
+        options['scheduler'] = scheduler
+        return options

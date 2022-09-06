@@ -1,4 +1,4 @@
-from typing import Optional, Union, List, Dict, Any
+from typing import Optional, Union, List, Any, Dict
 import torch
 from torchmetrics import Metric
 
@@ -7,20 +7,20 @@ from easypl.optimizers import WrapperOptimizer
 from easypl.lr_schedulers import WrapperScheduler
 
 
-class SegmentationLearner(BaseLearner):
+class GANLearner(BaseLearner):
     """
-    Segmenatation learner.
+    Generative adversarial networks learner.
 
     Attributes
     ----------
-    model: Optional[Union[torch.nn.Module, List[torch.nn.Module]]]
-        torch.nn.Module model.
+    model: Optional[List[torch.nn.Module]]
+        Generative adversarial networks.
 
-    loss: Optional[Union[torch.nn.Module, List[torch.nn.Module]]]
-        torch.nn.Module loss function.
+    loss: Optional[List[torch.nn.Module]]
+        torch.nn.Module losses function.
 
-    optimizer: Optional[Union[WrapperOptimizer, List[WrapperOptimizer]]]
-        Optimizer wrapper object.
+    optimizer: Optional[List[WrapperOptimizer]]
+        Optimizers wrapper object.
 
     lr_scheduler: Optional[Union[WrapperScheduler, List[WrapperScheduler]]]
         Scheduler object for lr scheduling.
@@ -40,22 +40,18 @@ class SegmentationLearner(BaseLearner):
     target_keys: Optional[List[str]]
         List of target keys
 
-    multilabel: bool
-        If segmentation task is multilabel.
     """
     def __init__(
             self,
-            model: Optional[Union[torch.nn.Module, List[torch.nn.Module]]] = None,
-            loss: Optional[Union[torch.nn.Module, List[torch.nn.Module]]] = None,
-            optimizer: Optional[Union[WrapperOptimizer, List[WrapperOptimizer]]] = None,
+            model: Optional[List[torch.nn.Module]] = None,
+            loss: Optional[List[torch.nn.Module]] = None,
+            optimizer: Optional[List[WrapperOptimizer]] = None,
             lr_scheduler: Optional[Union[WrapperScheduler, List[WrapperScheduler]]] = None,
             train_metrics: Optional[List[Metric]] = None,
             val_metrics: Optional[List[Metric]] = None,
             test_metrics: Optional[List[Metric]] = None,
             data_keys: Optional[List[str]] = None,
             target_keys: Optional[List[str]] = None,
-            multilabel: bool = False
-
     ):
         super().__init__(
             model=model,
@@ -66,11 +62,10 @@ class SegmentationLearner(BaseLearner):
             val_metrics=val_metrics,
             test_metrics=test_metrics,
             data_keys=data_keys,
-            target_keys=target_keys,
+            target_keys=target_keys
         )
-        if len(data_keys) != 1 and len(target_keys) != 1:
+        if len(data_keys) != 1:
             raise ValueError('"data_keys" and "target_keys" must be one element')
-        self.multilabel = multilabel
 
     __init__.__doc__ = BaseLearner.__init__.__doc__
 
@@ -90,12 +85,12 @@ class SegmentationLearner(BaseLearner):
         torch.Tensor
             Output from model.
         """
-        return self.model(samples)
+        return self.model[0](samples)
 
     def loss_step(
             self,
-            outputs: torch.Tensor,
-            targets: torch.Tensor,
+            outputs: Dict,
+            targets: Dict,
             optimizer_idx: int = 0
     ) -> Dict:
         """
@@ -117,16 +112,32 @@ class SegmentationLearner(BaseLearner):
         Dict
             Dict with keys: ["loss", "log"]
         """
-        loss = self.loss_f(
-            outputs,
-            targets.float() if self.multilabel or targets.ndim != 1 else targets.long()
-        )
-        return {
-            'loss': loss,
-            'log': {
-                'loss': loss
+        if optimizer_idx == 0:
+            loss = self.loss_f(
+                outputs['fake'],
+                targets['valid']
+            )
+            return {
+                'loss': loss,
+                'log': {
+                    'g_loss': loss
+                }
             }
-        }
+        if optimizer_idx == 1:
+            real_loss = self.loss_f(
+                outputs['valid'], targets['valid']
+            )
+            fake_loss = self.loss_f(
+                outputs['fake'], targets['fake']
+            )
+            loss = (real_loss + fake_loss) / 2
+            return {
+                'loss': loss,
+                'log': {
+                    'real_loss': real_loss,
+                    'fake_loss': fake_loss,
+                }
+            }
 
     def get_targets(
             self,
@@ -150,9 +161,16 @@ class SegmentationLearner(BaseLearner):
             Dict with keys: ["loss", "metric", "log"]
         """
         targets = batch[self.target_keys[0]]
+        valid = torch.ones(targets.size(0))
+        valid = valid.type_as(targets)
+        fake = torch.zeros(targets.size(0))
+        fake = fake.type_as(targets)
         return {
-            'loss': targets.float() if self.multilabel or targets.ndim > 3 else targets.long(),
-            'metric': targets if targets.ndim == 3 or self.multilabel else targets.argmax(dim=1),
+            'loss': {
+                'fake': fake,
+                'valid': valid
+            },
+            'metric': targets,
             'log': targets
         }
 
@@ -179,8 +197,23 @@ class SegmentationLearner(BaseLearner):
         """
         samples = batch[self.data_keys[0]]
         outputs = self.forward(samples)
-        return {
-            'loss': outputs,
-            'metric': outputs.sigmoid() if self.multilabel else outputs.argmax(dim=1),
-            'log': outputs.sigmoid() if self.multilabel else outputs.softmax(dim=1),
-        }
+        fake_disc = self.model[1](outputs)
+        if optimizer_idx == 0:
+            return {
+                'loss': {
+                    'fake': fake_disc
+                },
+                'metric': outputs,
+                'log': outputs,
+            }
+
+        if optimizer_idx == 1:
+            targets = batch[self.target_keys[0]]
+            return {
+                'loss': {
+                    'fake': fake_disc,
+                    'valid': self.model[1](targets)
+                },
+                'metric': None,
+                'log': None,
+            }
