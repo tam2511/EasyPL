@@ -27,9 +27,10 @@ class TorchMetric(Metric):
     def __init__(
             self,
             metric: Metric,
-            class_names: Optional[List] = None
+            class_names: Optional[List] = None,
+            **kwargs
     ):
-        super().__init__(dist_sync_on_step=metric.dist_sync_on_step, compute_on_step=metric.compute_on_step)
+        super().__init__(**kwargs)
         self.class_names = class_names
         self.metric = metric
         self.name = metric.__class__.__name__
