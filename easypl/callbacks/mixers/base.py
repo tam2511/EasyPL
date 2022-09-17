@@ -97,7 +97,7 @@ class MixBaseCallback(Callback):
         """
         raise NotImplementedError
 
-    def on_train_batch_start(self, trainer, pl_module, batch, batch_idx, dataloader_idx):
+    def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
         self.data_keys = pl_module.data_keys
         self.target_keys = pl_module.target_keys
         self.__check_device(batch)
