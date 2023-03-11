@@ -11,6 +11,15 @@ pip install easyplib
 ```
 Note: Sorry for the mismatch between the library name in the pypi index and the documentation. The pypi project name normalization algorithms does not allow you to specify an easypl project name.
 
+If you want install lib for only one task, you can use:
+```
+pip install easyplib[task]
+```
+where task can be classification, detection, segmentation, gan or you can install all depencies with:
+```
+pip install easyplib[all]
+```
+
 Also you can install library manually:
 
 ```

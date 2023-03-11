@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any
+from typing import Optional, Any
 
 import torch
 
@@ -8,19 +8,19 @@ class BasePostprocessing(object):
     def targets_handle(
             self,
             annotations: torch.Tensor,
-            image_scales: torch.Tensor
+            image_infos: Optional = None
     ) -> torch.Tensor:
         """
         Target handling for predict stage. Must return annotations in (x1, y1, x2, y2, class_idx) form.
-        By default it returns annotations without transforms.
+        By default, it returns annotations without transforms.
 
         Attributes
         ----------
         annotations: torch.Tensor
             Targets with size [batch size X max annotation size X 5].
 
-        image_scales: torch.Tensor
-            Scales of images [batch size X 2]
+        image_infos: Optional
+            Images infos
 
         Returns
         ----------
@@ -32,10 +32,10 @@ class BasePostprocessing(object):
             >>> def targets_handle(
             ...        self,
             ...        annotations: torch.Tensor,
-            ...        image_scales: torch.Tensor
+            ...        image_infos: Dict[str, torch.Tensor]
             ...) -> torch.Tensor:
             ...    annotations_ = annotations.detach().clone()
-            ...    annotations_[:, :, :4] *= image_scales[:, 0].repeat(1, 2).unsqueeze(1).repeat(1, annotations_.shape[1], 1)
+            ...    annotations_[:, :, :4] *= image_infos['scale']
             ...    return annotations_
         """
         return annotations
@@ -44,8 +44,7 @@ class BasePostprocessing(object):
     def outputs_handle(
             self,
             outputs: Any,
-            image_sizes: torch.Tensor,
-            image_scales: torch.Tensor,
+            image_infos: Optional = None
     ) -> torch.Tensor:
         """
         Outputs handling for predict stage. Must return result in (x1, y1, x2, y2, class_prob, class_idx) form.
@@ -58,8 +57,8 @@ class BasePostprocessing(object):
         image_sizes: torch.Tensor
             Sizes of images [batch size X 2]
 
-        image_scales: torch.Tensor
-            Scales of images [batch size X 2]
+        image_infos: Optional
+            Images infos
 
         Returns
         ----------

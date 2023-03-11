@@ -41,6 +41,9 @@ class DetectionLearner(BaseLearner):
     target_keys: Optional[List[str]]
         List of target keys
 
+    image_info_key: Optional[str]
+        Key of image info for postprocessing function
+
     postprocessing: Optional
         If postprocessing is not None then this
     """
@@ -55,8 +58,7 @@ class DetectionLearner(BaseLearner):
             test_metrics: Optional[List[Metric]] = None,
             data_keys: Optional[List[str]] = None,
             target_keys: Optional[List[str]] = None,
-            image_size_key: Optional[str] = None,
-            image_scale_key: Optional[str] = None,
+            image_info_key: Optional[str] = None,
             postprocessing: Optional[BasePostprocessing] = None
     ):
         super().__init__(
@@ -72,8 +74,7 @@ class DetectionLearner(BaseLearner):
         )
         if len(data_keys) != 1:
             raise ValueError('"data_keys" and "target_keys" must be one element')
-        self.image_size_key = image_size_key
-        self.image_scale_key = image_scale_key
+        self.image_info_key = image_info_key
         self.postprocessing = postprocessing
 
     __init__.__doc__ = BaseLearner.__init__.__doc__
@@ -152,10 +153,10 @@ class DetectionLearner(BaseLearner):
             Dict with keys: ["loss", "metric", "log"]
         """
         targets = batch[self.target_keys[0]]
-        image_scales = batch[self.image_scale_key]
+        images_infos = None if self.image_info_key is None else batch[self.image_info_key]
         transformed_targets = targets if self.postprocessing is None else self.postprocessing.targets_handle(
             targets,
-            image_scales
+            images_infos
         )
         return {
             'loss': targets,
@@ -186,12 +187,10 @@ class DetectionLearner(BaseLearner):
         """
         samples = batch[self.data_keys[0]]
         outputs = self.forward(samples)
-        image_sizes = batch[self.image_size_key]
-        image_scales = batch[self.image_scale_key]
+        images_infos = None if self.image_info_key is None else batch[self.image_info_key]
         transformed_outputs = outputs if self.postprocessing is None else self.postprocessing.outputs_handle(
             outputs,
-            image_sizes,
-            torch.ones_like(image_scales, dtype=image_scales.dtype, device=image_scales.device),
+            images_infos
         )
         return {
             'loss': outputs,

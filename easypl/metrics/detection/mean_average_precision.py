@@ -4,7 +4,6 @@ import torch
 from torchmetrics import Metric
 
 
-# TODO: slow compute and memory leak in torchmetrics MAP?
 class MAP(Metric):
     """
     Wrapper for MeanAveragePrecision from torchmetrics.
@@ -27,6 +26,7 @@ class MAP(Metric):
         Torchmetrics Metric args.
 
     """
+
     def __init__(
             self,
             iou_thresholds: Optional[List[float]] = None,
