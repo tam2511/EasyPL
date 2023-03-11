@@ -9,12 +9,12 @@ from easypl.lr_schedulers import WrapperScheduler
 
 class GANLearner(BaseLearner):
     """
-    Generative adversarial networks learner.
+    Simple example for generative adversarial networks learner.
 
     Attributes
     ----------
     model: Optional[List[torch.nn.Module]]
-        Generative adversarial networks.
+        Generator and discriminator
 
     loss: Optional[List[torch.nn.Module]]
         torch.nn.Module losses function.
