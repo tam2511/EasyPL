@@ -10,10 +10,9 @@ class MetricsList(Metric):
 
     def __init__(
             self,
-            dist_sync_on_step: bool = False,
-            compute_on_step: bool = True
+            **kwargs
     ):
-        super().__init__(dist_sync_on_step=dist_sync_on_step, compute_on_step=compute_on_step)
+        super().__init__(**kwargs)
         self.metrics = ModuleList()
         self.cache_metrics = ModuleList()
         if not hasattr(self, '_device'):
