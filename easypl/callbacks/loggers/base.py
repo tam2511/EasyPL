@@ -4,7 +4,7 @@ from typing import List, Dict, Optional, Callable, Any
 
 import pytorch_lightning
 from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.trainer.supporters import CombinedLoader
+from pytorch_lightning.utilities.combined_loader import CombinedLoader
 
 from easypl.callbacks.loggers.collector import ImageCollector
 
