@@ -238,21 +238,21 @@ class BaseLearner(LightningModule):
         return self.__step(batch=batch, batch_idx=batch_idx, optimizer_idx=optimizer_idx, phase='train',
                            log_on_step=True, log_on_epoch=False, log_prog_bar=True)
 
-    def training_epoch_end(self, train_step_outputs):
+    def on_train_epoch_end(self, train_step_outputs):
         self.__epoch_end(phase='train')
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
         return self.__step(batch=batch, batch_idx=batch_idx, dataloader_idx=dataloader_idx, phase='val',
                            log_on_step=False, log_on_epoch=True, log_prog_bar=True)
 
-    def validation_epoch_end(self, val_step_outputs):
+    def on_validation_epoch_end(self, val_step_outputs):
         self.__epoch_end(phase='val')
 
     def test_step(self, batch, batch_idx, dataloader_idx=0):
         return self.__step(batch=batch, batch_idx=batch_idx, dataloader_idx=dataloader_idx, phase='test',
                            log_on_step=False, log_on_epoch=True, log_prog_bar=True)
 
-    def test_epoch_end(self, val_step_outputs):
+    def on_test_epoch_end(self, val_step_outputs):
         self.__epoch_end(phase='test')
 
     def __base_optimizer_initialization(self):
